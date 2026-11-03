@@ -3,7 +3,7 @@ import { db } from '../db/database.js';
 import { WeighInRecord } from '../types.js';
 
 export class WeighInService {
-  static logWeighIn(
+  static async logWeighIn(
     userId: string,
     wagerId: string,
     data: {
@@ -13,17 +13,17 @@ export class WeighInService {
       photoUrl?: string;
       unit?: 'kg' | 'lbs';
     }
-  ): WeighInRecord {
+  ): Promise<WeighInRecord> {
     const today = new Date().toISOString().slice(0, 10);
     const date = data.weighInDate || today;
 
     // Check if user is a participant
-    const participant = db.getParticipant(wagerId, userId);
+    const participant = await db.getParticipant(wagerId, userId);
     if (!participant) {
       throw new Error('User is not a participant in this wager');
     }
 
-    const existing = db.getWeighIn(userId, wagerId, date);
+    const existing = await db.getWeighIn(userId, wagerId, date);
     const record: WeighInRecord = {
       id: existing?.id || crypto.randomUUID(),
       userId,
@@ -37,10 +37,10 @@ export class WeighInService {
       createdAt: existing?.createdAt || new Date().toISOString(),
     };
 
-    return db.saveWeighIn(record);
+    return await db.saveWeighIn(record);
   }
 
-  static getHistory(userId: string, wagerId: string): WeighInRecord[] {
-    return db.getUserWeighIns(userId, wagerId);
+  static async getHistory(userId: string, wagerId: string): Promise<WeighInRecord[]> {
+    return await db.getUserWeighIns(userId, wagerId);
   }
 }

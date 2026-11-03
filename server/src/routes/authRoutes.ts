@@ -6,10 +6,10 @@ import { requireAuth } from '../middleware/auth.js';
 const router = Router();
 
 // Send OTP via SMS / WhatsApp
-router.post('/otp/send', (req: Request, res: Response, next: NextFunction) => {
+router.post('/otp/send', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { phone } = SendOtpSchema.parse(req.body);
-    const result = AuthService.sendOtp(phone);
+    const result = await AuthService.sendOtp(phone);
     res.json(result);
   } catch (err) {
     next(err);
@@ -17,10 +17,10 @@ router.post('/otp/send', (req: Request, res: Response, next: NextFunction) => {
 });
 
 // Verify OTP & Issue Token
-router.post('/otp/verify', (req: Request, res: Response, next: NextFunction) => {
+router.post('/otp/verify', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { phone, otp, fullName } = VerifyOtpSchema.parse(req.body);
-    const { token, user } = AuthService.verifyOtp(phone, otp, fullName);
+    const { token, user } = await AuthService.verifyOtp(phone, otp, fullName);
 
     // Set secure HTTP-only cookie
     res.cookie('betfit_token', token, {
@@ -37,14 +37,14 @@ router.post('/otp/verify', (req: Request, res: Response, next: NextFunction) => 
 });
 
 // Google One-Tap Sign In
-router.post('/google', (req: Request, res: Response, next: NextFunction) => {
+router.post('/google', async (req: Request, res: Response, next: NextFunction) => {
   try {
     const { email, name } = req.body;
     if (!email || !name) {
       return res.status(400).json({ error: 'Email and name are required' });
     }
 
-    const { token, user } = AuthService.googleSignIn(email, name);
+    const { token, user } = await AuthService.googleSignIn(email, name);
 
     res.cookie('betfit_token', token, {
       httpOnly: true,

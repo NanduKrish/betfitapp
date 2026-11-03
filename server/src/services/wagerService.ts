@@ -13,7 +13,7 @@ export class WagerService {
     return `${slug || 'BET'}-${rand}`;
   }
 
-  static createWager(
+  static async createWager(
     creator: User,
     data: {
       title: string;
@@ -28,7 +28,7 @@ export class WagerService {
       targetWeight: number;
       chosenDisciplines: string[];
     }
-  ): { wager: Wager; participant: WagerParticipant } {
+  ): Promise<{ wager: Wager; participant: WagerParticipant }> {
     const wagerId = crypto.randomUUID();
     const inviteCode = this.generateInviteCode(data.title);
     const now = new Date().toISOString();
@@ -52,7 +52,7 @@ export class WagerService {
       updatedAt: now,
     };
 
-    db.saveWager(wager);
+    await db.saveWager(wager);
 
     // Creator is the initial owner participant
     const participantId = crypto.randomUUID();
@@ -71,19 +71,19 @@ export class WagerService {
       joinedAt: now,
     };
 
-    db.saveParticipant(participant);
+    await db.saveParticipant(participant);
 
     return { wager, participant };
   }
 
-  static getWagersForUser(userId: string): Wager[] {
-    return db.getUserWagers(userId);
+  static async getWagersForUser(userId: string): Promise<Wager[]> {
+    return await db.getUserWagers(userId);
   }
 
-  static getWagerById(wagerId: string) {
-    const wager = db.getWagerById(wagerId);
+  static async getWagerById(wagerId: string) {
+    const wager = await db.getWagerById(wagerId);
     if (!wager) return null;
-    const participants = db.getWagerParticipants(wagerId);
+    const participants = await db.getWagerParticipants(wagerId);
     return {
       ...wager,
       participantCount: participants.length,
@@ -91,12 +91,12 @@ export class WagerService {
     };
   }
 
-  static previewInvite(code: string) {
-    const wager = db.getWagerByInviteCode(code);
+  static async previewInvite(code: string) {
+    const wager = await db.getWagerByInviteCode(code);
     if (!wager) return null;
 
-    const creator = db.getUserById(wager.creatorId);
-    const participants = db.getWagerParticipants(wager.id);
+    const creator = await db.getUserById(wager.creatorId);
+    const participants = await db.getWagerParticipants(wager.id);
 
     return {
       id: wager.id,
@@ -113,7 +113,7 @@ export class WagerService {
     };
   }
 
-  static joinWager(
+  static async joinWager(
     user: User,
     wagerId: string,
     data: {
@@ -122,8 +122,8 @@ export class WagerService {
       targetWeight: number;
       chosenDisciplines: string[];
     }
-  ): { wager: Wager; participant: WagerParticipant } {
-    const wager = db.getWagerById(wagerId);
+  ): Promise<{ wager: Wager; participant: WagerParticipant }> {
+    const wager = await db.getWagerById(wagerId);
     if (!wager) {
       throw new Error('Wager not found');
     }
@@ -132,7 +132,7 @@ export class WagerService {
       throw new Error(`Cannot join wager with status: ${wager.status}`);
     }
 
-    let existingParticipant = db.getParticipant(wagerId, user.id);
+    let existingParticipant = await db.getParticipant(wagerId, user.id);
     if (existingParticipant) {
       throw new Error('You are already a participant in this wager showdown');
     }
@@ -153,22 +153,22 @@ export class WagerService {
       joinedAt: new Date().toISOString(),
     };
 
-    db.saveParticipant(participant);
+    await db.saveParticipant(participant);
 
     // Refresh wager pot
-    const updatedWager = db.getWagerById(wagerId)!;
+    const updatedWager = (await db.getWagerById(wagerId))!;
     return { wager: updatedWager, participant };
   }
 
-  static updateWager(
+  static async updateWager(
     userId: string,
     wagerId: string,
     updates: Partial<Pick<Wager, 'title' | 'description' | 'targetDeadline' | 'forfeitRule' | 'stakeAmount'>>
-  ): Wager {
-    const wager = db.getWagerById(wagerId);
+  ): Promise<Wager> {
+    const wager = await db.getWagerById(wagerId);
     if (!wager) throw new Error('Wager not found');
 
-    const participant = db.getParticipant(wagerId, userId);
+    const participant = await db.getParticipant(wagerId, userId);
     if (!participant || participant.role !== 'owner') {
       throw new Error('Only the wager owner can update terms');
     }
@@ -179,23 +179,23 @@ export class WagerService {
     if (updates.forfeitRule) wager.forfeitRule = updates.forfeitRule;
     if (updates.stakeAmount && updates.stakeAmount > 0) {
       wager.stakeAmount = updates.stakeAmount;
-      const participants = db.getWagerParticipants(wagerId);
+      const participants = await db.getWagerParticipants(wagerId);
       wager.totalPot = participants.length * wager.stakeAmount;
     }
     wager.updatedAt = new Date().toISOString();
 
-    return db.saveWager(wager);
+    return await db.saveWager(wager);
   }
 
-  static deleteWager(userId: string, wagerId: string): boolean {
-    const wager = db.getWagerById(wagerId);
+  static async deleteWager(userId: string, wagerId: string): Promise<boolean> {
+    const wager = await db.getWagerById(wagerId);
     if (!wager) return false;
 
-    const participant = db.getParticipant(wagerId, userId);
+    const participant = await db.getParticipant(wagerId, userId);
     if (!participant || participant.role !== 'owner') {
       throw new Error('Only the wager owner can delete the wager showdown');
     }
 
-    return db.deleteWager(wagerId);
+    return await db.deleteWager(wagerId);
   }
 }

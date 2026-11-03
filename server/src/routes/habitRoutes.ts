@@ -6,17 +6,21 @@ import { ToggleHabitSchema } from '../types.js';
 const router = Router();
 
 // Get today's habits
-router.get('/today', requireAuth, (req: Request, res: Response) => {
-  const dateStr = req.query.date as string | undefined;
-  const habits = HabitService.getTodayHabits(req.user!.id, dateStr);
-  res.json({ habits });
+router.get('/today', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const dateStr = req.query.date as string | undefined;
+    const habits = await HabitService.getTodayHabits(req.user!.id, dateStr);
+    res.json({ habits });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // Toggle habit completion
-router.post('/toggle', requireAuth, (req: Request, res: Response, next: NextFunction) => {
+router.post('/toggle', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = ToggleHabitSchema.parse(req.body);
-    const result = HabitService.toggleHabit(
+    const result = await HabitService.toggleHabit(
       req.user!.id,
       data.discipline,
       data.completed,
@@ -30,15 +34,23 @@ router.post('/toggle', requireAuth, (req: Request, res: Response, next: NextFunc
 });
 
 // Get streak stats
-router.get('/stats', requireAuth, (req: Request, res: Response) => {
-  const stats = HabitService.getStreakStats(req.user!.id);
-  res.json({ stats });
+router.get('/stats', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const stats = await HabitService.getStreakStats(req.user!.id);
+    res.json({ stats });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // Use a streak shield
-router.post('/shield', requireAuth, (req: Request, res: Response) => {
-  const stats = HabitService.useShield(req.user!.id);
-  res.json({ stats });
+router.post('/shield', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const stats = await HabitService.useShield(req.user!.id);
+    res.json({ stats });
+  } catch (err) {
+    next(err);
+  }
 });
 
 export default router;

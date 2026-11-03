@@ -17,18 +17,9 @@ export const ShareBetModal: React.FC<ShareBetModalProps> = ({
 
   const [copied, setCopied] = useState(false);
 
-  // Encode bet metadata in URL
-  const betPayload = {
-    id: betGroup.id,
-    title: betGroup.title,
-    pot: betGroup.potAmount,
-    currency: betGroup.currency || '₹',
-    deadline: betGroup.targetDeadline,
-    forfeit: betGroup.forfeitDescription
-  };
-
-  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(betPayload))));
-  const shareUrl = `${window.location.origin}${window.location.pathname}?bet=${encoded}`;
+  // Clean shareable link using cloud invite code
+  const inviteCode = betGroup.inviteCode || betGroup.id;
+  const shareUrl = `${window.location.origin}${window.location.pathname}?join=${inviteCode}`;
 
   const handleCopy = () => {
     navigator.clipboard.writeText(shareUrl);

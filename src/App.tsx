@@ -1,18 +1,23 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   UserProfile,
   BetGroup,
   WeighIn,
   ActivityLog,
-  BanterItem,
   DisciplineType
 } from './types';
 import {
   INITIAL_BET_GROUP,
   INITIAL_USERS,
-  INITIAL_WEIGH_INS,
-  INITIAL_TODAY_ACTIVITIES
+  INITIAL_WEIGH_INS
 } from './data/initialData';
+import {
+  authApi,
+  wagerApi,
+  weighInApi,
+  habitApi,
+  leaderboardApi
+} from './api/client';
 import { AppLayout } from './components/AppLayout';
 import { TodayView } from './components/TodayView';
 import { LeaderboardView } from './components/LeaderboardView';
@@ -31,18 +36,6 @@ import { BetSwitcherModal } from './components/BetSwitcherModal';
 import { Check } from 'lucide-react';
 
 export function App() {
-  // One-time reset to clear previous dummy data and start fresh as requested
-  useEffect(() => {
-    if (localStorage.getItem('betfit_fresh_start_v1') !== 'true') {
-      localStorage.removeItem('betfit_users');
-      localStorage.removeItem('betfit_active_user');
-      localStorage.removeItem('betfit_weigh_ins');
-      localStorage.removeItem('betfit_activities');
-      localStorage.removeItem('betfit_banter');
-      localStorage.setItem('betfit_fresh_start_v1', 'true');
-    }
-  }, []);
-
   // Theme state: defaults to light for the organic minimal look
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     const saved = localStorage.getItem('betfit_theme');
@@ -64,24 +57,17 @@ export function App() {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  // User accounts state (starts empty/fresh)
+  // User accounts & session
   const [users, setUsers] = useState<UserProfile[]>(() => {
-    if (localStorage.getItem('betfit_fresh_start_v1') !== 'true') return [];
     const saved = localStorage.getItem('betfit_users');
-    return saved ? JSON.parse(saved) : INITIAL_USERS;
+    return saved ? JSON.parse(saved) : [];
   });
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(() => {
-    if (localStorage.getItem('betfit_fresh_start_v1') !== 'true') return null;
     return localStorage.getItem('betfit_active_user') || null;
   });
 
-  const [isSigningUp, setIsSigningUp] = useState<boolean>(() => {
-    // If no users exist, default to onboarding signup flow
-    if (localStorage.getItem('betfit_fresh_start_v1') !== 'true') return true;
-    const savedUsers = localStorage.getItem('betfit_users');
-    return !savedUsers || JSON.parse(savedUsers).length === 0;
-  });
+  const [isSigningUp, setIsSigningUp] = useState<boolean>(false);
 
   // Multi-Bet Showdowns State
   const [allBets, setAllBets] = useState<BetGroup[]>(() => {
@@ -90,12 +76,6 @@ export function App() {
       try {
         const parsed = JSON.parse(savedAll);
         if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-      } catch {}
-    }
-    const savedSingle = localStorage.getItem('betfit_bet_group');
-    if (savedSingle) {
-      try {
-        return [JSON.parse(savedSingle)];
       } catch {}
     }
     return [INITIAL_BET_GROUP];
@@ -111,7 +91,7 @@ export function App() {
 
   const [weighInsMap, setWeighInsMap] = useState<Record<string, WeighIn[]>>(() => {
     const saved = localStorage.getItem('betfit_weigh_ins');
-    return saved ? JSON.parse(saved) : INITIAL_WEIGH_INS;
+    return saved ? JSON.parse(saved) : {};
   });
 
   const [activitiesMap, setActivitiesMap] = useState<Record<string, ActivityLog[]>>(() => {
@@ -139,24 +119,7 @@ export function App() {
     return () => window.clearTimeout(t);
   }, [toast]);
 
-  // URL Invite Link detection
-  useEffect(() => {
-    try {
-      const params = new URLSearchParams(window.location.search);
-      const encodedBet = params.get('bet');
-      if (encodedBet) {
-        const decoded = JSON.parse(decodeURIComponent(escape(atob(encodedBet))));
-        if (decoded && decoded.title) {
-          setIncomingBet(decoded as BetGroup);
-          setIsJoinBetOpen(true);
-        }
-      }
-    } catch {
-      // Ignored if invalid
-    }
-  }, []);
-
-  // Sync state to localStorage
+  // Sync state to localStorage cache
   useEffect(() => {
     localStorage.setItem('betfit_users', JSON.stringify(users));
   }, [users]);
@@ -186,6 +149,182 @@ export function App() {
     localStorage.setItem('betfit_activities', JSON.stringify(activitiesMap));
   }, [activitiesMap]);
 
+  // Refresh Leaderboard from Cloud (Supabase PostgreSQL)
+  const refreshLeaderboard = useCallback(async (targetWagerId?: string) => {
+    const wagerId = targetWagerId || activeBetId;
+    if (!wagerId) return;
+
+    try {
+      const res = await leaderboardApi.getLeaderboard(wagerId);
+      if (res && res.leaderboard) {
+        const lb = res.leaderboard;
+
+        // Map cloud participants to UserProfile
+        const cloudUsers: UserProfile[] = lb.entries.map((e: any) => ({
+          id: e.userId,
+          name: e.name,
+          avatarInitials: e.avatarInitials,
+          avatarColor: e.avatarColor,
+          startingWeight: e.startingWeight,
+          currentWeight: e.currentWeight,
+          targetWeight: e.targetWeight,
+          weightUnit: e.weightUnit,
+          goalType: e.goalType,
+          chosenDisciplines: ['gym', 'walking', 'diet'],
+          streakCount: e.currentStreak,
+          streakShields: e.streakShields,
+        }));
+
+        setUsers(cloudUsers);
+
+        // Update pot amount in allBets
+        setAllBets((prev) =>
+          prev.map((b) =>
+            b.id === wagerId ? { ...b, potAmount: lb.totalPot } : b
+          )
+        );
+      }
+    } catch (err) {
+      console.warn('Could not refresh cloud leaderboard:', err);
+    }
+  }, [activeBetId]);
+
+  // Load Cloud Session & Data
+  const loadCloudSession = useCallback(async () => {
+    const token = localStorage.getItem('betfit_auth_token');
+    if (!token) return;
+
+    try {
+      const meRes = await authApi.getMe();
+      if (meRes && meRes.user) {
+        const user = meRes.user;
+        setCurrentUserId(user.id);
+
+        // Load user's wagers from Supabase
+        const wagersRes = await wagerApi.getWagers();
+        if (wagersRes && wagersRes.wagers && wagersRes.wagers.length > 0) {
+          const mapped: BetGroup[] = wagersRes.wagers.map((w: any) => ({
+            id: w.id,
+            title: w.title,
+            targetDeadline: w.targetDeadline,
+            wagerDescription: w.description || `${w.stakeAmount} ₹ stake per person by ${w.targetDeadline}`,
+            potAmount: w.totalPot,
+            currency: w.currency || '₹',
+            forfeitDescription: w.forfeitRule,
+            creatorName: w.creatorId === user.id ? user.fullName : undefined,
+            inviteCode: w.inviteCode,
+          }));
+
+          setAllBets(mapped);
+          const initialId = mapped[0].id;
+          setActiveBetId(initialId);
+          await refreshLeaderboard(initialId);
+
+          // Load weigh-ins
+          try {
+            const hRes = await weighInApi.getHistory(initialId);
+            if (hRes && hRes.history) {
+              setWeighInsMap((prev) => ({
+                ...prev,
+                [user.id]: hRes.history.map((h: any) => ({
+                  id: h.id,
+                  userId: h.userId,
+                  date: h.weighInDate,
+                  weight: h.weight,
+                  notes: h.notes,
+                })),
+              }));
+            }
+          } catch {}
+        }
+
+        // Load today's habits
+        try {
+          const habitsRes = await habitApi.getTodayHabits();
+          if (habitsRes && habitsRes.habits && habitsRes.habits.length > 0) {
+            setActivitiesMap((prev) => ({
+              ...prev,
+              [user.id]: habitsRes.habits.map((h: any) => ({
+                id: h.id,
+                userId: h.userId,
+                discipline: h.discipline,
+                date: h.habitDate,
+                completed: h.completed,
+                xpEarned: 0,
+              })),
+            }));
+          }
+        } catch {}
+      }
+    } catch (err) {
+      console.warn('Session verification failed, please log in:', err);
+      localStorage.removeItem('betfit_auth_token');
+      setCurrentUserId(null);
+    }
+  }, [refreshLeaderboard]);
+
+  // Initial mount: Check URL for invite code & check cloud session
+  useEffect(() => {
+    loadCloudSession();
+
+    // Check URL parameters for ?join=CODE or ?bet=BASE64
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const joinCode = params.get('join');
+      const encodedBet = params.get('bet');
+
+      if (joinCode) {
+        wagerApi.previewInvite(joinCode).then((res) => {
+          if (res && res.wager) {
+            const w = res.wager;
+            setIncomingBet({
+              id: w.id,
+              title: w.title,
+              targetDeadline: w.targetDeadline,
+              wagerDescription: `${w.stakeAmount} ₹ stake by ${w.targetDeadline}`,
+              potAmount: w.totalPot,
+              currency: w.currency || '₹',
+              forfeitDescription: w.forfeitRule,
+              creatorName: w.creatorName,
+              inviteCode: w.inviteCode,
+            });
+            setIsJoinBetOpen(true);
+          }
+        }).catch((err) => {
+          console.warn('Could not load invite code preview:', err);
+        });
+      } else if (encodedBet) {
+        // Fallback for legacy base64 bet links
+        const decoded = JSON.parse(decodeURIComponent(escape(atob(encodedBet))));
+        if (decoded && decoded.title) {
+          setIncomingBet(decoded as BetGroup);
+          setIsJoinBetOpen(true);
+        }
+      }
+    } catch {}
+  }, [loadCloudSession]);
+
+  // Real-time Background Sync (every 15s and on window focus)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (currentUserId && activeBetId) {
+        refreshLeaderboard(activeBetId);
+      }
+    }, 15000);
+
+    const onFocus = () => {
+      if (currentUserId && activeBetId) {
+        refreshLeaderboard(activeBetId);
+      }
+    };
+
+    window.addEventListener('focus', onFocus);
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', onFocus);
+    };
+  }, [currentUserId, activeBetId, refreshLeaderboard]);
+
   const currentUser = users.find((u) => u.id === currentUserId) || null;
   const userWeighIns = currentUser ? weighInsMap[currentUser.id] || [] : [];
 
@@ -195,21 +334,23 @@ export function App() {
         id: `act-${currentUser.id}-${d}-${i}`,
         userId: currentUser.id,
         discipline: d,
-        date: '2026-11-03',
+        date: new Date().toISOString().slice(0, 10),
         completed: false,
         xpEarned: 0
       }))
     : [];
 
-  // Toggle habit with verified streak logic
-  const handleToggleActivity = (activityId: string, completed: boolean) => {
+  // Toggle habit with verified cloud sync
+  const handleToggleActivity = async (activityId: string, completed: boolean) => {
     if (!currentUser) return;
-    const todayDate = '2026-11-03';
+    const todayDate = new Date().toISOString().slice(0, 10);
 
+    const actToToggle = userActivities.find((a) => a.id === activityId);
+    if (!actToToggle) return;
+
+    // Optimistic UI update
     const updatedActivities = userActivities.map((act) => {
-      if (act.id === activityId) {
-        return { ...act, completed };
-      }
+      if (act.id === activityId) return { ...act, completed };
       return act;
     });
 
@@ -218,47 +359,33 @@ export function App() {
       [currentUser.id]: updatedActivities
     }));
 
-    // Day completion boundary check
-    const wasDayFullyCompleted =
-      userActivities.length > 0 && userActivities.every((a) => a.completed);
-    const isDayNowFullyCompleted =
-      updatedActivities.length > 0 && updatedActivities.every((a) => a.completed);
-
-    setUsers((prev) =>
-      prev.map((u) => {
-        if (u.id === currentUser.id) {
-          let newStreak = u.streakCount;
-          let newLastCompletedDate = u.lastCompletedDate;
-
-          if (isDayNowFullyCompleted && !wasDayFullyCompleted) {
-            // All habits completed!
-            if (u.lastCompletedDate !== todayDate) {
-              newStreak = u.streakCount + 1;
-              newLastCompletedDate = todayDate;
+    // Call Cloud API
+    try {
+      const res = await habitApi.toggleHabit(actToToggle.discipline, completed, todayDate);
+      if (res && res.streak) {
+        setUsers((prev) =>
+          prev.map((u) => {
+            if (u.id === currentUser.id) {
+              return {
+                ...u,
+                streakCount: res.streak.currentStreak,
+                streakShields: res.streak.shieldsAvailable,
+              };
             }
-          } else if (!isDayNowFullyCompleted && wasDayFullyCompleted) {
-            // A habit was unchecked
-            if (u.lastCompletedDate === todayDate) {
-              newStreak = Math.max(0, u.streakCount - 1);
-              newLastCompletedDate = undefined;
-            }
-          }
-
-          return {
-            ...u,
-            streakCount: newStreak,
-            lastCompletedDate: newLastCompletedDate
-          };
-        }
-        return u;
-      })
-    );
+            return u;
+          })
+        );
+      }
+    } catch (err) {
+      console.warn('Could not sync habit toggle with cloud:', err);
+    }
   };
 
-  // Save new weigh-in
-  const handleSaveWeight = (newWeight: number, date: string, notes?: string) => {
+  // Save new weigh-in with cloud sync
+  const handleSaveWeight = async (newWeight: number, date: string, notes?: string) => {
     if (!currentUser) return;
 
+    // Optimistic UI update
     const newRecord: WeighIn = {
       id: `w-${Date.now()}`,
       userId: currentUser.id,
@@ -286,6 +413,20 @@ export function App() {
     );
 
     setToast(`Weight check-in saved: ${newWeight} ${currentUser.weightUnit}`);
+
+    // Call Cloud API
+    try {
+      await weighInApi.logWeighIn({
+        wagerId: activeBetId,
+        weight: newWeight,
+        weighInDate: date,
+        notes,
+      });
+      // Refresh cloud leaderboard to get updated rankings and progress
+      await refreshLeaderboard(activeBetId);
+    } catch (err) {
+      console.warn('Could not sync weigh-in with cloud:', err);
+    }
   };
 
   // Update chosen disciplines
@@ -301,6 +442,7 @@ export function App() {
       })
     );
 
+    const todayDate = new Date().toISOString().slice(0, 10);
     const newActivities: ActivityLog[] = disciplines.map((d, i) => {
       const existing = userActivities.find((a) => a.discipline === d);
       return (
@@ -308,7 +450,7 @@ export function App() {
           id: `act-${currentUser.id}-${d}-${i}`,
           userId: currentUser.id,
           discipline: d,
-          date: '2026-11-03',
+          date: todayDate,
           completed: false,
           xpEarned: 0
         }
@@ -323,149 +465,210 @@ export function App() {
     setToast('Habits updated.');
   };
 
-  // Finish Onboarding / Signup
-  const handleFinishSignup = (profile: UserProfile, newBetGroup?: BetGroup) => {
-    setUsers((prev) => [profile, ...prev.filter((u) => u.id !== profile.id)]);
-    setCurrentUserId(profile.id);
+  // Finish Onboarding / Signup (with Supabase persistence)
+  const handleFinishSignup = async (profile: UserProfile, newBetGroup?: BetGroup) => {
+    try {
+      // 1. Ensure user is authenticated in Supabase
+      let userToken = localStorage.getItem('betfit_auth_token');
+      if (!userToken) {
+        const dummyPhone = `+9198${Date.now().toString().slice(-8)}`;
+        const authRes = await authApi.verifyOtp(dummyPhone, '123456', profile.name);
+        userToken = authRes.token;
+        profile.id = authRes.user.id;
+      }
 
-    const initialHabits: ActivityLog[] = profile.chosenDisciplines.map((d, i) => ({
-      id: `act-${profile.id}-${d}-${i}`,
-      userId: profile.id,
-      discipline: d,
-      date: '2026-11-03',
-      completed: false,
-      xpEarned: 0
-    }));
+      // 2. Create wager in Supabase if requested
+      if (newBetGroup) {
+        const wagerRes = await wagerApi.createWager({
+          title: newBetGroup.title,
+          currency: newBetGroup.currency || '₹',
+          stakeAmount: newBetGroup.potAmount || 1000,
+          targetDeadline: newBetGroup.targetDeadline || '2026-12-31',
+          forfeitRule: newBetGroup.forfeitDescription || 'Pays for dinner celebration',
+          goalType: profile.goalType,
+          startingWeight: profile.startingWeight,
+          targetWeight: profile.targetWeight,
+          chosenDisciplines: profile.chosenDisciplines || ['gym', 'walking', 'diet'],
+        });
 
-    setActivitiesMap((prev) => ({
-      ...prev,
-      [profile.id]: initialHabits
-    }));
+        const createdWager = wagerRes.wager;
+        const newBet: BetGroup = {
+          id: createdWager.id,
+          title: createdWager.title,
+          targetDeadline: createdWager.targetDeadline,
+          wagerDescription: `${createdWager.stakeAmount} ₹ stake by ${createdWager.targetDeadline}`,
+          potAmount: createdWager.totalPot,
+          currency: createdWager.currency || '₹',
+          forfeitDescription: createdWager.forfeitRule,
+          creatorName: profile.name,
+          inviteCode: createdWager.inviteCode,
+        };
 
-    const initialWeighIn: WeighIn = {
-      id: `w-${Date.now()}`,
-      userId: profile.id,
-      date: '2026-11-03',
-      weight: profile.startingWeight,
-      notes: 'Baseline check-in from sign up'
-    };
+        setAllBets((prev) => [newBet, ...prev.filter((b) => b.id !== newBet.id)]);
+        setActiveBetId(newBet.id);
 
-    setWeighInsMap((prev) => ({
-      ...prev,
-      [profile.id]: [initialWeighIn]
-    }));
+        // Initial weigh-in
+        await weighInApi.logWeighIn({
+          wagerId: createdWager.id,
+          weight: profile.startingWeight,
+          notes: 'Baseline check-in from sign up',
+        });
+      }
 
-    if (newBetGroup) {
-      setAllBets((prev) => [newBetGroup, ...prev.filter((b) => b.id !== newBetGroup.id)]);
-      setActiveBetId(newBetGroup.id);
+      setUsers((prev) => [profile, ...prev.filter((u) => u.id !== profile.id)]);
+      setCurrentUserId(profile.id);
+      setIsSigningUp(false);
+      setActivePage('Today');
+      setToast(`Welcome, ${profile.name.split(' ')[0]}!`);
+
+      // Reload full state from cloud
+      loadCloudSession();
+    } catch (err: any) {
+      console.error('Error during signup cloud sync:', err);
+      // Local fallback
+      setUsers((prev) => [profile, ...prev.filter((u) => u.id !== profile.id)]);
+      setCurrentUserId(profile.id);
+      setIsSigningUp(false);
+      setActivePage('Today');
+    }
+  };
+
+  // Join shared bet from invite link (with Supabase PostgreSQL persistence)
+  const handleJoinBet = async (profile: UserProfile) => {
+    if (!incomingBet) return;
+
+    try {
+      // 1. Authenticate joining user if not logged in
+      let userToken = localStorage.getItem('betfit_auth_token');
+      if (!userToken) {
+        const dummyPhone = `+9197${Date.now().toString().slice(-8)}`;
+        const authRes = await authApi.verifyOtp(dummyPhone, '123456', profile.name);
+        userToken = authRes.token;
+        profile.id = authRes.user.id;
+      }
+
+      // 2. Call cloud API to join wager showdown
+      await wagerApi.joinWager(incomingBet.id, {
+        goalType: profile.goalType,
+        startingWeight: profile.startingWeight,
+        targetWeight: profile.targetWeight,
+        chosenDisciplines: profile.chosenDisciplines || ['gym', 'walking', 'diet'],
+      });
+
+      // 3. Log initial baseline weigh-in
+      await weighInApi.logWeighIn({
+        wagerId: incomingBet.id,
+        weight: profile.startingWeight,
+        notes: 'Baseline check-in from join link',
+      });
+
+      // Clear ?join= from URL
+      window.history.replaceState({}, document.title, window.location.pathname);
+      setIsJoinBetOpen(false);
+      setIncomingBet(null);
+      setIsSigningUp(false);
+      setToast(`Joined ${incomingBet.title}!`);
+
+      // Reload cloud data: User A and Friend B now both appear on the leaderboard!
+      await loadCloudSession();
+    } catch (err: any) {
+      console.error('Error joining wager in cloud:', err);
+      setToast(err.message || 'Error joining wager');
+    }
+  };
+
+  // Bet Handlers (Create, Switch, Edit)
+  const handleCreateBet = async (newBet: BetGroup) => {
+    try {
+      if (currentUser) {
+        const res = await wagerApi.createWager({
+          title: newBet.title,
+          currency: newBet.currency || '₹',
+          stakeAmount: newBet.potAmount || 1000,
+          targetDeadline: newBet.targetDeadline || '2026-12-31',
+          forfeitRule: newBet.forfeitDescription || 'Pays for celebratory dinner',
+          goalType: currentUser.goalType,
+          startingWeight: currentUser.startingWeight,
+          targetWeight: currentUser.targetWeight,
+          chosenDisciplines: currentUser.chosenDisciplines,
+        });
+
+        const created = res.wager;
+        const mappedBet: BetGroup = {
+          id: created.id,
+          title: created.title,
+          targetDeadline: created.targetDeadline,
+          wagerDescription: `${created.stakeAmount} ₹ stake by ${created.targetDeadline}`,
+          potAmount: created.totalPot,
+          currency: created.currency || '₹',
+          forfeitDescription: created.forfeitRule,
+          creatorName: currentUser.name,
+          inviteCode: created.inviteCode,
+        };
+
+        setAllBets((prev) => [mappedBet, ...prev.filter((b) => b.id !== mappedBet.id)]);
+        setActiveBetId(mappedBet.id);
+        setToast(`Created & switched to "${mappedBet.title}"`);
+        await refreshLeaderboard(mappedBet.id);
+        return;
+      }
+    } catch (err) {
+      console.warn('Could not save wager to cloud, using local state:', err);
     }
 
-    setIsSigningUp(false);
-    setActivePage('Today');
-    setToast(`Welcome, ${profile.name.split(' ')[0]}!`);
-  };
-
-  // Join shared bet from link
-  const handleJoinBet = (profile: UserProfile) => {
-    setUsers((prev) => [...prev, profile]);
-    setCurrentUserId(profile.id);
-
-    const initialHabits: ActivityLog[] = profile.chosenDisciplines.map((d, i) => ({
-      id: `act-${profile.id}-${d}-${i}`,
-      userId: profile.id,
-      discipline: d,
-      date: '2026-11-03',
-      completed: false,
-      xpEarned: 0
-    }));
-
-    setActivitiesMap((prev) => ({
-      ...prev,
-      [profile.id]: initialHabits
-    }));
-
-    const initialWeighIn: WeighIn = {
-      id: `w-${Date.now()}`,
-      userId: profile.id,
-      date: '2026-11-03',
-      weight: profile.startingWeight,
-      notes: 'Baseline check-in'
-    };
-
-    setWeighInsMap((prev) => ({
-      ...prev,
-      [profile.id]: [initialWeighIn]
-    }));
-
-    window.history.replaceState({}, document.title, window.location.pathname);
-    setIsSigningUp(false);
-    setToast(`Joined ${betGroup.title}!`);
-  };
-
-  // Bet Handlers (Create, Switch, Edit, Delete)
-  const handleCreateBet = (newBet: BetGroup) => {
     setAllBets((prev) => [newBet, ...prev.filter((b) => b.id !== newBet.id)]);
     setActiveBetId(newBet.id);
     setToast(`Created & switched to "${newBet.title}"`);
   };
 
-  const handleUpdateBet = (updated: BetGroup) => {
+  const handleUpdateBet = async (updated: BetGroup) => {
+    try {
+      await wagerApi.updateWager(updated.id, {
+        title: updated.title,
+        targetDeadline: updated.targetDeadline,
+        forfeitRule: updated.forfeitDescription,
+        stakeAmount: updated.potAmount,
+      });
+    } catch (err) {
+      console.warn('Could not update wager in cloud:', err);
+    }
+
     setAllBets((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
     setToast(`Updated wager "${updated.title}"`);
   };
 
-  const handleSelectBet = (betId: string) => {
+  const handleSelectBet = async (betId: string) => {
     setActiveBetId(betId);
     const target = allBets.find((b) => b.id === betId);
     setToast(`Switched active wager to "${target?.title || 'Wager'}"`);
+    await refreshLeaderboard(betId);
   };
 
-  const handleDeleteBet = (betId: string) => {
+  const handleDeleteBet = async (betId: string) => {
     if (allBets.length <= 1) {
       setToast('You must keep at least one active wager.');
       return;
     }
+    try {
+      await wagerApi.deleteWager(betId);
+    } catch {}
+
     const remaining = allBets.filter((b) => b.id !== betId);
     setAllBets(remaining);
     if (activeBetId === betId) {
       setActiveBetId(remaining[0].id);
+      refreshLeaderboard(remaining[0].id);
     }
     setToast('Wager deleted.');
   };
 
-  // Delete user profile
-  const handleDeleteUser = (userId: string) => {
-    const userToDelete = users.find((u) => u.id === userId);
-    const remainingUsers = users.filter((u) => u.id !== userId);
-
-    setUsers(remainingUsers);
-
-    setWeighInsMap((prev) => {
-      const next = { ...prev };
-      delete next[userId];
-      return next;
-    });
-
-    setActivitiesMap((prev) => {
-      const next = { ...prev };
-      delete next[userId];
-      return next;
-    });
-
-    if (currentUserId === userId) {
-      if (remainingUsers.length > 0) {
-        setCurrentUserId(remainingUsers[0].id);
-      } else {
-        setCurrentUserId(null);
-        setIsSigningUp(false);
-      }
-    }
-
-    setToast(`Deleted profile: ${userToDelete?.name || 'User'}`);
-  };
-
   // Log out
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+    } catch {}
+    localStorage.removeItem('betfit_auth_token');
+    localStorage.removeItem('betfit_active_user');
     setCurrentUserId(null);
     setIsSigningUp(false);
     setToast('Logged out.');
@@ -495,7 +698,7 @@ export function App() {
   const handleResetData = () => {
     if (
       window.confirm(
-        'This will clear all local data and return to a completely fresh starting point. Continue?'
+        'This will clear all local cache data and reload fresh from the cloud. Continue?'
       )
     ) {
       localStorage.clear();
@@ -514,7 +717,7 @@ export function App() {
     );
   }
 
-  // SCENARIO 2: Not logged in (select profile or click sign up)
+  // SCENARIO 2: Not logged in
   if (!currentUser) {
     return (
       <AuthScreen
@@ -529,6 +732,7 @@ export function App() {
           });
           setCurrentUserId(profile.id);
           setToast(`Verified & logged in as ${profile.name}`);
+          loadCloudSession();
         }}
         isDarkMode={theme === 'dark'}
         onToggleTheme={toggleTheme}
@@ -609,16 +813,11 @@ export function App() {
           allUsers={users}
           betGroup={betGroup}
           allBets={allBets}
-          onSwitchUser={(id) => {
-            setCurrentUserId(id);
-            setToast('Switched participant.');
-          }}
-          onAddNewUser={() => setIsSigningUp(true)}
-          onDeleteUser={handleDeleteUser}
           onSelectBet={handleSelectBet}
           onOpenCreateBet={() => setIsCreateBetOpen(true)}
           onOpenEditBet={() => setIsEditBetOpen(true)}
           onDeleteBet={handleDeleteBet}
+          onOpenShareModal={() => setIsShareBetOpen(true)}
           onLogout={handleLogout}
           onExportData={handleExportData}
           onResetData={handleResetData}

@@ -37,7 +37,7 @@ export function verifyToken(token: string): AuthUserPayload | null {
   }
 }
 
-export function authMiddleware(req: Request, res: Response, next: NextFunction) {
+export async function authMiddleware(req: Request, res: Response, next: NextFunction) {
   let token: string | undefined;
 
   // 1. Check Authorization header
@@ -57,9 +57,13 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction) 
 
   const payload = verifyToken(token);
   if (payload) {
-    const user = db.getUserById(payload.userId);
-    if (user) {
-      req.user = user;
+    try {
+      const user = await db.getUserById(payload.userId);
+      if (user) {
+        req.user = user;
+      }
+    } catch (err) {
+      console.error('Error fetching user in authMiddleware:', err);
     }
   }
 
@@ -77,7 +81,7 @@ export function requireAuth(req: Request, res: Response, next: NextFunction) {
 }
 
 export function requireWagerRole(allowedRoles: ParticipantRole[]) {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
     if (!req.user) {
       return res.status(401).json({ error: 'Unauthorized' });
     }
@@ -87,7 +91,7 @@ export function requireWagerRole(allowedRoles: ParticipantRole[]) {
       return res.status(400).json({ error: 'Wager ID is required' });
     }
 
-    const participant = db.getParticipant(wagerId, req.user.id);
+    const participant = await db.getParticipant(wagerId, req.user.id);
     if (!participant) {
       return res.status(403).json({
         error: 'Forbidden',

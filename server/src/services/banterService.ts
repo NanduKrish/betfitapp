@@ -3,11 +3,11 @@ import { db } from '../db/database.js';
 import { BanterItem, BanterType, User } from '../types.js';
 
 export class BanterService {
-  static getWagerBanter(wagerId: string, limit = 50): BanterItem[] {
-    return db.getWagerBanter(wagerId, limit);
+  static async getWagerBanter(wagerId: string, limit = 50): Promise<BanterItem[]> {
+    return await db.getWagerBanter(wagerId, limit);
   }
 
-  static postBanter(
+  static async postBanter(
     sender: User,
     wagerId: string,
     data: {
@@ -15,10 +15,10 @@ export class BanterService {
       message: string;
       recipientId?: string;
     }
-  ): BanterItem {
+  ): Promise<BanterItem> {
     let recipientName: string | undefined;
     if (data.recipientId) {
-      const recipient = db.getUserById(data.recipientId);
+      const recipient = await db.getUserById(data.recipientId);
       recipientName = recipient?.fullName;
     }
 
@@ -36,6 +36,6 @@ export class BanterService {
       createdAt: new Date().toISOString(),
     };
 
-    return db.saveBanter(item);
+    return await db.saveBanter(item);
   }
 }

@@ -6,25 +6,33 @@ import { CreateWagerSchema, JoinWagerSchema } from '../types.js';
 const router = Router();
 
 // Preview invite link (Public - no auth required to view details before joining)
-router.get('/invite/:code', (req: Request, res: Response) => {
-  const preview = WagerService.previewInvite(req.params.code as string);
-  if (!preview) {
-    return res.status(404).json({ error: 'Showdown not found or invite expired' });
+router.get('/invite/:code', async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const preview = await WagerService.previewInvite(req.params.code as string);
+    if (!preview) {
+      return res.status(404).json({ error: 'Showdown not found or invite expired' });
+    }
+    res.json({ wager: preview });
+  } catch (err) {
+    next(err);
   }
-  res.json({ wager: preview });
 });
 
 // List all wagers for authenticated user
-router.get('/', requireAuth, (req: Request, res: Response) => {
-  const wagers = WagerService.getWagersForUser(req.user!.id);
-  res.json({ wagers });
+router.get('/', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const wagers = await WagerService.getWagersForUser(req.user!.id);
+    res.json({ wagers });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // Create new wager showdown
-router.post('/', requireAuth, (req: Request, res: Response, next: NextFunction) => {
+router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = CreateWagerSchema.parse(req.body);
-    const result = WagerService.createWager(req.user!, data);
+    const result = await WagerService.createWager(req.user!, data);
     res.status(201).json(result);
   } catch (err) {
     next(err);
@@ -32,19 +40,23 @@ router.post('/', requireAuth, (req: Request, res: Response, next: NextFunction) 
 });
 
 // Get wager details
-router.get('/:id', requireAuth, (req: Request, res: Response) => {
-  const wager = WagerService.getWagerById(req.params.id as string);
-  if (!wager) {
-    return res.status(404).json({ error: 'Wager not found' });
+router.get('/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const wager = await WagerService.getWagerById(req.params.id as string);
+    if (!wager) {
+      return res.status(404).json({ error: 'Wager not found' });
+    }
+    res.json({ wager });
+  } catch (err) {
+    next(err);
   }
-  res.json({ wager });
 });
 
 // Join wager
-router.post('/:id/join', requireAuth, (req: Request, res: Response, next: NextFunction) => {
+router.post('/:id/join', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = JoinWagerSchema.parse(req.body);
-    const result = WagerService.joinWager(req.user!, req.params.id as string, data);
+    const result = await WagerService.joinWager(req.user!, req.params.id as string, data);
     res.json(result);
   } catch (err) {
     next(err);
@@ -52,9 +64,9 @@ router.post('/:id/join', requireAuth, (req: Request, res: Response, next: NextFu
 });
 
 // Update wager terms (Owner only)
-router.put('/:id', requireAuth, (req: Request, res: Response, next: NextFunction) => {
+router.put('/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const updated = WagerService.updateWager(req.user!.id, req.params.id as string, req.body);
+    const updated = await WagerService.updateWager(req.user!.id, req.params.id as string, req.body);
     res.json({ wager: updated });
   } catch (err) {
     next(err);
@@ -62,9 +74,9 @@ router.put('/:id', requireAuth, (req: Request, res: Response, next: NextFunction
 });
 
 // Delete wager (Owner only)
-router.delete('/:id', requireAuth, (req: Request, res: Response, next: NextFunction) => {
+router.delete('/:id', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
-    const success = WagerService.deleteWager(req.user!.id, req.params.id as string);
+    const success = await WagerService.deleteWager(req.user!.id, req.params.id as string);
     if (!success) {
       return res.status(404).json({ error: 'Wager not found' });
     }
@@ -73,6 +85,5 @@ router.delete('/:id', requireAuth, (req: Request, res: Response, next: NextFunct
     next(err);
   }
 });
-
 
 export default router;

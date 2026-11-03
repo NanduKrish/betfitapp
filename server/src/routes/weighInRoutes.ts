@@ -6,10 +6,10 @@ import { LogWeighInSchema } from '../types.js';
 const router = Router();
 
 // Log weigh-in
-router.post('/', requireAuth, (req: Request, res: Response, next: NextFunction) => {
+router.post('/', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = LogWeighInSchema.parse(req.body);
-    const record = WeighInService.logWeighIn(req.user!.id, data.wagerId, data);
+    const record = await WeighInService.logWeighIn(req.user!.id, data.wagerId, data);
     res.status(201).json({ record });
   } catch (err) {
     next(err);
@@ -17,10 +17,13 @@ router.post('/', requireAuth, (req: Request, res: Response, next: NextFunction) 
 });
 
 // Get weigh-in history for a wager
-router.get('/:wagerId', requireAuth, (req: Request, res: Response) => {
-  const history = WeighInService.getHistory(req.user!.id, req.params.wagerId as string);
-  res.json({ history });
+router.get('/:wagerId', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const history = await WeighInService.getHistory(req.user!.id, req.params.wagerId as string);
+    res.json({ history });
+  } catch (err) {
+    next(err);
+  }
 });
-
 
 export default router;

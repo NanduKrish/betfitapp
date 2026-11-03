@@ -1,50 +1,58 @@
-import React from 'react';
-import { Download, Trash2, UserPlus, LogOut, Check, ArrowRight, Trophy, Plus, Sliders, Calendar } from 'lucide-react';
+import React, { useState } from 'react';
+import {
+  LogOut,
+  Trophy,
+  Plus,
+  Sliders,
+  Check,
+  Share2,
+  Copy,
+  ExternalLink,
+  Flame,
+  ShieldCheck,
+  Target,
+  Sparkles
+} from 'lucide-react';
 import { UserProfile, BetGroup } from '../types';
 import { Avatar } from './Avatar';
 
 interface SettingsViewProps {
   currentUser: UserProfile;
-  allUsers: UserProfile[];
+  allUsers?: UserProfile[];
   betGroup: BetGroup;
   allBets?: BetGroup[];
-  onSwitchUser: (userId: string) => void;
-  onAddNewUser: () => void;
-  onDeleteUser: (userId: string) => void;
   onSelectBet?: (betId: string) => void;
   onOpenCreateBet?: () => void;
   onOpenEditBet?: () => void;
   onDeleteBet?: (betId: string) => void;
+  onOpenShareModal?: () => void;
   onLogout: () => void;
-  onExportData: () => void;
-  onResetData: () => void;
+  // Optional backwards compatibility
+  onSwitchUser?: (userId: string) => void;
+  onAddNewUser?: () => void;
+  onDeleteUser?: (userId: string) => void;
+  onExportData?: () => void;
+  onResetData?: () => void;
 }
 
 export const SettingsView: React.FC<SettingsViewProps> = ({
   currentUser,
-  allUsers,
   betGroup,
   allBets = [],
-  onSwitchUser,
-  onAddNewUser,
-  onDeleteUser,
   onSelectBet,
   onOpenCreateBet,
   onOpenEditBet,
-  onDeleteBet,
+  onOpenShareModal,
   onLogout,
-  onExportData,
-  onResetData
 }) => {
-  const handleDelete = (user: UserProfile) => {
-    const isCurrent = user.id === currentUser.id;
-    const msg = isCurrent
-      ? `Are you sure you want to delete your active profile "${user.name}"? All your check-ins and habits will be removed.`
-      : `Are you sure you want to delete profile "${user.name}"? All their check-ins and habits will be removed.`;
+  const [copiedCode, setCopiedCode] = useState<string | null>(null);
 
-    if (window.confirm(msg)) {
-      onDeleteUser(user.id);
-    }
+  const handleCopyInviteLink = (b: BetGroup) => {
+    const code = b.inviteCode || b.id;
+    const shareUrl = `${window.location.origin}${window.location.pathname}?join=${code}`;
+    navigator.clipboard.writeText(shareUrl);
+    setCopiedCode(code);
+    setTimeout(() => setCopiedCode(null), 2200);
   };
 
   return (
@@ -52,99 +60,90 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       {/* Page Header */}
       <div className="page-head">
         <div>
-          <div className="eyebrow">PREFERENCES</div>
-          <h1>Settings</h1>
+          <div className="eyebrow">MY ACCOUNT</div>
+          <h1>Settings & Profile</h1>
           <p>
-            Manage participant profiles, account switching, local storage, and data backup.
+            Manage your personal profile, review your active wager showdowns, and manage your account.
           </p>
         </div>
+      </div>
 
-        <div className="page-head-actions">
-          <button className="btn-secondary text-xs" onClick={onAddNewUser}>
-            <UserPlus size={14} /> Add new user
-          </button>
+      {/* 1. My Profile Card */}
+      <div className="section-title">
+        <h2>My Profile</h2>
+        <span className="flex items-center gap-1 text-[var(--green)]">
+          <ShieldCheck size={14} /> Cloud Synchronized
+        </span>
+      </div>
+
+      <div className="clean-card rounded-2xl p-5 bg-[var(--surface)] border border-[var(--line)] space-y-4">
+        <div className="flex items-center gap-4 flex-wrap">
+          <Avatar initials={currentUser.avatarInitials} colorClass={currentUser.avatarColor} size="lg" />
+
+          <div className="space-y-1 min-w-0">
+            <div className="flex items-center gap-2 flex-wrap">
+              <b className="text-base sm:text-lg font-bold text-[var(--text)]">{currentUser.name}</b>
+              <span className="text-xs font-semibold text-[var(--green)] bg-[var(--surface-subtle)] border border-[var(--line)] px-2 py-0.5 rounded-full uppercase">
+                {currentUser.goalType === 'gain' ? 'Bulking (Weight Gain)' : 'Cutting (Weight Loss)'}
+              </span>
+            </div>
+
+            <p className="text-xs text-[var(--muted)]">
+              Starting: <strong className="text-[var(--text)]">{currentUser.startingWeight} {currentUser.weightUnit}</strong> · Current: <strong className="text-[var(--text)]">{currentUser.currentWeight} {currentUser.weightUnit}</strong> · Target: <strong className="text-[var(--text)]">{currentUser.targetWeight} {currentUser.weightUnit}</strong>
+            </p>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-3 border-t border-[var(--line)]">
+          <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--line)]">
+            <span className="text-xs text-[var(--muted)] block">Habit Streak</span>
+            <div className="flex items-center gap-1.5 mt-1">
+              <Flame size={16} className="text-[var(--green)]" />
+              <b className="text-sm sm:text-base font-bold text-[var(--text)] font-mono-num">
+                {currentUser.streakCount} {currentUser.streakCount === 1 ? 'day' : 'days'}
+              </b>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--line)]">
+            <span className="text-xs text-[var(--muted)] block">Streak Shields</span>
+            <div className="flex items-center gap-1.5 mt-1">
+              <ShieldCheck size={16} className="text-[var(--green)]" />
+              <b className="text-sm sm:text-base font-bold text-[var(--text)] font-mono-num">
+                {currentUser.streakShields} available
+              </b>
+            </div>
+          </div>
+
+          <div className="p-3 rounded-xl bg-[var(--bg)] border border-[var(--line)] col-span-2 sm:col-span-1">
+            <span className="text-xs text-[var(--muted)] block">Cloud Database</span>
+            <div className="flex items-center gap-1.5 mt-1">
+              <Sparkles size={16} className="text-[var(--amber)]" />
+              <b className="text-xs font-semibold text-[var(--text)]">Supabase Live</b>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* 1. Manage Profiles / Participants */}
-      <div className="section-title">
-        <h2>Participants on this device</h2>
-        <span>{allUsers.length} {allUsers.length === 1 ? 'profile' : 'profiles'} registered</span>
-      </div>
-
-      <div className="space-y-2.5">
-        {allUsers.map((u) => {
-          const isCurrent = u.id === currentUser.id;
-          return (
-            <div
-              key={u.id}
-              className={`clean-card rounded-xl p-4 bg-[var(--surface)] border flex items-center justify-between gap-3 flex-wrap transition ${
-                isCurrent ? 'border-[var(--green)]/60 bg-[var(--green-pale)]' : 'border-[var(--line)]'
-              }`}
-            >
-              <div className="flex items-center gap-3">
-                <Avatar initials={u.avatarInitials} colorClass={u.avatarColor} size="md" />
-
-                <div>
-                  <div className="flex items-center gap-2">
-                    <b className="text-xs sm:text-sm text-[var(--text)]">{u.name}</b>
-                    {isCurrent && (
-                      <span className="text-xs font-semibold text-[var(--green)] bg-[var(--surface)] border border-[var(--line)] px-1.5 py-0.5 rounded">
-                        ACTIVE
-                      </span>
-                    )}
-                    <span className="text-xs font-semibold text-[var(--muted)] uppercase bg-[var(--surface-subtle)] border border-[var(--line)] px-1.5 py-0.5 rounded">
-                      {u.goalType === 'gain' ? 'Bulk' : 'Cut'}
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-[var(--muted)] mt-0.5">
-                    {u.currentWeight}kg (Target: {u.targetWeight}kg) · Streak: {u.streakCount} days
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-2 ml-auto">
-                {!isCurrent && (
-                  <button
-                    className="btn-secondary text-xs h-8 px-2.5"
-                    onClick={() => onSwitchUser(u.id)}
-                  >
-                    <span>Switch</span>
-                    <ArrowRight size={13} />
-                  </button>
-                )}
-
-                <button
-                  className="btn-danger text-xs h-8 px-2.5"
-                  onClick={() => handleDelete(u)}
-                  title={`Delete profile ${u.name}`}
-                >
-                  <Trash2 size={13} />
-                  <span>Delete</span>
-                </button>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* 2. Manage Wagers & Showdowns */}
+      {/* 2. My Active Showdowns */}
       <div className="section-title recent-title">
         <div>
-          <h2>Wagers & Showdowns</h2>
-          <span>{allBets.length} {allBets.length === 1 ? 'wager' : 'wagers'} configured</span>
+          <h2>My Active Wagers</h2>
+          <span>{allBets.length} {allBets.length === 1 ? 'showdown' : 'showdowns'}</span>
         </div>
         {onOpenCreateBet && (
           <button className="btn-secondary text-xs h-8 px-2.5" onClick={onOpenCreateBet}>
-            <Plus size={14} /> <span>New Bet</span>
+            <Plus size={14} /> <span>New Showdown</span>
           </button>
         )}
       </div>
 
-      <div className="space-y-2.5">
+      <div className="space-y-3">
         {allBets.map((b) => {
           const isActive = b.id === betGroup.id;
+          const code = b.inviteCode || b.id;
+          const isCopied = copiedCode === code;
+
           return (
             <div
               key={b.id}
@@ -172,12 +171,21 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   </div>
                   <p className="text-xs text-[var(--muted)] mt-0.5 font-mono-num">
                     {b.currency || '₹'}{b.potAmount} Pot · Deadline: {b.targetDeadline}
-                    {b.forfeitDescription ? ` · ${b.forfeitDescription}` : ''}
+                    {b.inviteCode ? ` · Code: ${b.inviteCode}` : ''}
                   </p>
                 </div>
               </div>
 
               <div className="flex items-center gap-2 ml-auto">
+                <button
+                  className="btn-secondary text-xs h-8 px-2.5"
+                  onClick={() => handleCopyInviteLink(b)}
+                  title="Copy shareable invite link"
+                >
+                  {isCopied ? <Check size={13} className="text-[var(--green)]" /> : <Copy size={13} />}
+                  <span>{isCopied ? 'Link Copied' : 'Invite'}</span>
+                </button>
+
                 {isActive && onOpenEditBet && (
                   <button
                     className="btn-secondary text-xs h-8 px-2.5"
@@ -194,22 +202,6 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                     onClick={() => onSelectBet(b.id)}
                   >
                     <span>Switch</span>
-                    <ArrowRight size={13} />
-                  </button>
-                )}
-
-                {allBets.length > 1 && onDeleteBet && (
-                  <button
-                    className="btn-danger text-xs h-8 px-2.5"
-                    onClick={() => {
-                      if (window.confirm(`Are you sure you want to delete wager "${b.title}"?`)) {
-                        onDeleteBet(b.id);
-                      }
-                    }}
-                    title="Delete wager"
-                  >
-                    <Trash2 size={13} />
-                    <span>Delete</span>
                   </button>
                 )}
               </div>
@@ -218,60 +210,31 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         })}
       </div>
 
-      {/* 3. Account Session */}
+      {/* 3. Session & Logout */}
       <div className="section-title recent-title">
-        <h2>Session & Account</h2>
-        <span>Current: {currentUser.name}</span>
+        <h2>Session</h2>
+        <span>Logged in as {currentUser.name}</span>
       </div>
 
-      <div className="settings-card flex-wrap">
+      <div className="clean-card rounded-2xl p-5 bg-[var(--surface)] border border-[var(--line)] flex items-center justify-between gap-4 flex-wrap">
         <div>
-          <b>Log out of active session</b>
-          <p>Exit to the welcome screen so another participant can log in or register.</p>
+          <b className="text-xs sm:text-sm text-[var(--text)] font-semibold block">Log Out of BetFit Arena</b>
+          <p className="text-xs text-[var(--muted)] mt-0.5">
+            Safely disconnect this device from your active account. Your weights and habits stay safely synced in the cloud database.
+          </p>
         </div>
-        <button className="btn-secondary text-xs h-9 px-3 shrink-0" onClick={onLogout}>
+        <button
+          className="btn-secondary text-xs h-9 px-3.5 shrink-0 flex items-center gap-2 hover:border-[var(--danger)] hover:text-[var(--danger)]"
+          onClick={onLogout}
+        >
           <LogOut size={14} /> Log out
         </button>
       </div>
 
-      {/* 3. Storage & Backup */}
-      <div className="section-title recent-title">
-        <h2>Storage & Backup</h2>
-        <span>Private offline storage</span>
-      </div>
-
-      <div className="settings-card flex-wrap">
-        <div>
-          <b>Local Browser Storage</b>
-          <p>Your habit streaks, weigh-in records, and wager stakes are saved directly in this browser.</p>
-        </div>
-        <span className="storage-badge shrink-0">OFFLINE LOCAL</span>
-      </div>
-
-      <div className="settings-card flex-wrap">
-        <div>
-          <b>Export Backup Data</b>
-          <p>Download a JSON backup of your current participants, weigh-ins, habits, and wager rules.</p>
-        </div>
-        <button className="btn-secondary text-xs h-9 px-3 shrink-0" onClick={onExportData}>
-          <Download size={15} /> Export JSON
-        </button>
-      </div>
-
-      {/* 4. Danger Reset */}
-      <div className="settings-card danger-row flex-wrap">
-        <div>
-          <b className="text-[var(--danger)]">Reset Application</b>
-          <p>Wipe all local data and return to a completely fresh starting point.</p>
-        </div>
-        <button className="btn-danger text-xs h-9 px-3 shrink-0" onClick={onResetData}>
-          <Trash2 size={14} /> Reset Data
-        </button>
-      </div>
-
       <p className="settings-foot">
-        BetFit Arena is designed for peer accountability without external server tracking. All stakes are displayed in Indian Rupees (₹).
+        BetFit Arena · Production Cloud Version 1.0 · All stakes tracked in Indian Rupees (₹).
       </p>
     </div>
   );
 };
+export default SettingsView;

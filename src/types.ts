@@ -74,6 +74,7 @@ export interface BetGroup {
   currency: string; // '₹'
   forfeitDescription: string;
   creatorName?: string;
+  inviteCode?: string;
 }
 
 export interface Achievement {

@@ -11,7 +11,7 @@ router.get('/profile', requireAuth, (req: Request, res: Response) => {
 });
 
 // Update profile
-router.put('/profile', requireAuth, (req: Request, res: Response, next: NextFunction) => {
+router.put('/profile', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = UpdateProfileSchema.parse(req.body);
     const user = req.user!;
@@ -23,7 +23,7 @@ router.put('/profile', requireAuth, (req: Request, res: Response, next: NextFunc
     if (data.privacyMode) user.privacyMode = data.privacyMode;
     user.updatedAt = new Date().toISOString();
 
-    const updated = db.saveUser(user);
+    const updated = await db.saveUser(user);
     res.json({ user: updated });
   } catch (err) {
     next(err);
@@ -31,8 +31,8 @@ router.put('/profile', requireAuth, (req: Request, res: Response, next: NextFunc
 });
 
 // Delete user account
-router.delete('/me', requireAuth, (req: Request, res: Response) => {
-  const success = db.deleteUser(req.user!.id);
+router.delete('/me', requireAuth, async (req: Request, res: Response) => {
+  const success = await db.deleteUser(req.user!.id);
   res.clearCookie('betfit_token');
   res.json({ success, message: 'User account and associated records deleted' });
 });

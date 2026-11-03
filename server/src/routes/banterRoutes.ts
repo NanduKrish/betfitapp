@@ -6,18 +6,21 @@ import { CreateBanterSchema } from '../types.js';
 const router = Router();
 
 // Get banter for a wager
-router.get('/:wagerId', requireAuth, (req: Request, res: Response) => {
-  const banter = BanterService.getWagerBanter(req.params.wagerId as string);
-  res.json({ banter });
+router.get('/:wagerId', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const banter = await BanterService.getWagerBanter(req.params.wagerId as string);
+    res.json({ banter });
+  } catch (err) {
+    next(err);
+  }
 });
 
 // Post banter message
-router.post('/:wagerId', requireAuth, (req: Request, res: Response, next: NextFunction) => {
+router.post('/:wagerId', requireAuth, async (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = CreateBanterSchema.parse(req.body);
-    const item = BanterService.postBanter(req.user!, req.params.wagerId as string, data);
+    const item = await BanterService.postBanter(req.user!, req.params.wagerId as string, data);
     res.status(201).json({ item });
-
   } catch (err) {
     next(err);
   }
