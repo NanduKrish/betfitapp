@@ -11,10 +11,12 @@
     "server:build": "cd server && npm run build",
     "server:test": "cd server && node test/services.test.js",
     "test": "npm run server:test",
+    "db:migrate": "cd server && npm run db:migrate",
     "build:all": "npm run build && npm run server:build"
   },
 
   "dependencies": {
+    "@supabase/supabase-js": "^2.118.0",
     "canvas-confetti": "^1.9.4",
     "clsx": "^2.1.1",
     "lucide-react": "^1.16.0",
