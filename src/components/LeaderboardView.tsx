@@ -1,289 +1,240 @@
-import React, { useState } from 'react';
+import React from 'react';
+import {
+  Trophy,
+  Share2,
+  Plus,
+  Flame,
+  AlertCircle,
+  TrendingDown,
+  TrendingUp,
+  Clock,
+  ShieldAlert,
+  Sliders
+} from 'lucide-react';
 import { UserProfile, BetGroup, BanterItem } from '../types';
-import { DisciplineIcon } from './DisciplineIcon';
 import { Avatar } from './Avatar';
 import {
   calculateGoalProgress,
   calculateWeightDelta,
+  calculateRequiredPace,
   isDangerZone
 } from '../utils/calculations';
-import {
-  Trophy,
-  AlertCircle,
-  Flame,
-  MessageSquare,
-  Send,
-  Edit2,
-  Share2,
-  Plus
-} from 'lucide-react';
 
 interface LeaderboardViewProps {
-  users: UserProfile[];
   currentUser: UserProfile;
+  allUsers: UserProfile[];
   betGroup: BetGroup;
   banterList: BanterItem[];
-  onSendBanter: (toUserId: string, text: string, type: 'nudge' | 'cheer' | 'taunt') => void;
-  onOpenBetModal: () => void;
   onOpenShareModal: () => void;
   onOpenCreateBetModal: () => void;
+  onOpenEditBetModal: () => void;
+  onSendBanter: (toUser: UserProfile, type: 'nudge' | 'cheer' | 'taunt') => void;
 }
 
 export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
-  users,
   currentUser,
+  allUsers,
   betGroup,
   banterList,
-  onSendBanter,
-  onOpenBetModal,
   onOpenShareModal,
-  onOpenCreateBetModal
+  onOpenCreateBetModal,
+  onOpenEditBetModal,
+  onSendBanter
 }) => {
-  const [selectedFriend, setSelectedFriend] = useState<UserProfile | null>(null);
-  const [message, setMessage] = useState('');
+  // Sort users fairly by % of goal achieved
+  const rankedUsers = [...allUsers].sort((a, b) => {
+    const pA = calculateGoalProgress(a.startingWeight, a.currentWeight, a.targetWeight, a.goalType);
+    const pB = calculateGoalProgress(b.startingWeight, b.currentWeight, b.targetWeight, b.goalType);
+    return pB - pA;
+  });
 
-  // Enhanced & sorted by % of Goal Achieved
-  const sorted = [...users]
-    .map((u) => {
-      const goalPercent = calculateGoalProgress(u.startingWeight, u.currentWeight, u.targetWeight, u.goalType);
-      const deltaInfo = calculateWeightDelta(u.startingWeight, u.currentWeight, u.targetWeight, u.goalType);
-      const inDanger = isDangerZone(u.startingWeight, u.currentWeight, u.targetWeight, betGroup.targetDeadline, u.goalType);
-      return { ...u, goalPercent, deltaInfo, inDanger };
-    })
-    .sort((a, b) => b.goalPercent - a.goalPercent);
-
-  const handlePost = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!message.trim() || !selectedFriend) return;
-    onSendBanter(selectedFriend.id, message, 'taunt');
-    setMessage('');
-    setSelectedFriend(null);
-  };
+  const paceRef = calculateRequiredPace(
+    currentUser.currentWeight,
+    currentUser.targetWeight,
+    betGroup.targetDeadline,
+    currentUser.goalType
+  );
 
   return (
-    <div className="mobile-container space-y-4 pb-20 pt-1">
-      {/* 1. Bet Stakes Header Card */}
-      <div className="clean-card rounded-2xl p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5 text-xs font-semibold text-amber-600 dark:text-amber-400">
-            <Trophy className="w-4 h-4 text-amber-500" />
-            <span>THE BET VAULT</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={onOpenShareModal}
-              className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:opacity-80 flex items-center gap-1"
-            >
-              <Share2 className="w-3.5 h-3.5" /> Invite
-            </button>
-            <button
-              onClick={onOpenBetModal}
-              className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center gap-1"
-            >
-              <Edit2 className="w-3 h-3" /> Edit
-            </button>
-          </div>
-        </div>
-
+    <div>
+      {/* Page Header */}
+      <div className="page-head">
         <div>
-          <h2 className="text-base font-bold text-[var(--text-primary)]">{betGroup.title}</h2>
-          <p className="text-xs text-[var(--text-secondary)] mt-0.5">
-            Deadline: <span className="font-semibold text-[var(--text-primary)]">{betGroup.targetDeadline}</span>
+          <div className="eyebrow">THE WAGER</div>
+          <h1>{betGroup.title}</h1>
+          <p>
+            {betGroup.currency || '₹'}
+            {betGroup.potAmount} collective stakes in the vault. Target deadline: December 31.
           </p>
         </div>
 
-        <div className="pt-2 border-t border-[var(--border-color)] flex items-center justify-between text-xs">
-          <div>
-            <span className="text-[var(--text-muted)] block text-[10px] uppercase font-bold">Winner Pot</span>
-            <span className="text-base font-extrabold text-amber-600 dark:text-amber-400 font-mono-num">
-              {betGroup.currency || '₹'}{betGroup.potAmount}
-            </span>
-          </div>
-          <div className="text-right max-w-[200px]">
-            <span className="text-[var(--text-muted)] block text-[10px] uppercase font-bold">Forfeit</span>
-            <span className="text-[var(--text-secondary)] text-[11px] line-clamp-1 font-medium">
-              {betGroup.forfeitDescription}
-            </span>
-          </div>
-        </div>
-
-        {/* Action buttons */}
-        <div className="pt-1 flex gap-2">
-          <button
-            onClick={onOpenShareModal}
-            className="flex-1 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs flex items-center justify-center gap-1.5 transition shadow-xs"
-          >
-            <Share2 className="w-3.5 h-3.5" />
-            <span>Share Join Link</span>
+        <div className="flex items-center gap-2">
+          <button className="btn-secondary" onClick={onOpenShareModal}>
+            <Share2 size={15} /> Invite
           </button>
-          <button
-            onClick={onOpenCreateBetModal}
-            className="py-2 px-3 rounded-xl bg-[var(--bg-card-subtle)] hover:bg-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-semibold text-xs flex items-center gap-1 transition"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span>New Bet</span>
+          <button className="btn-primary" onClick={onOpenCreateBetModal}>
+            <Plus size={15} /> New Bet
           </button>
         </div>
       </div>
 
-      {/* 2. Ranked Standings List */}
-      <div className="space-y-2">
-        <div className="flex items-center justify-between px-1">
-          <h3 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
-            Standings ({sorted.length} Participants)
-          </h3>
-          <span className="text-xs text-[var(--text-muted)]">Ranked by Goal %</span>
+      {/* Summary Cards */}
+      <div className="progress-summary">
+        <div>
+          <span>TOTAL VAULT</span>
+          <b>
+            {betGroup.currency || '₹'}
+            {betGroup.potAmount}
+          </b>
         </div>
+        <div>
+          <span>DAYS REMAINING</span>
+          <b>{paceRef.daysLeft} days</b>
+        </div>
+        <div>
+          <span>PARTICIPANTS</span>
+          <b>{allUsers.length} Friends</b>
+        </div>
+        <div>
+          <span>FORFEIT PENALTY</span>
+          <b className="text-xs truncate">{betGroup.forfeitDescription || 'Dinner'}</b>
+        </div>
+      </div>
 
-        {sorted.map((u, idx) => {
-          const isMe = u.id === currentUser.id;
+      {/* Standings Title */}
+      <div className="section-title">
+        <h2>Official Standings</h2>
+        <span>Ranked by % of Goal Completed</span>
+      </div>
+
+      {/* Ranked Cards */}
+      <div className="goal-list">
+        {rankedUsers.map((user, idx) => {
+          const isMe = user.id === currentUser.id;
+          const progress = calculateGoalProgress(
+            user.startingWeight,
+            user.currentWeight,
+            user.targetWeight,
+            user.goalType
+          );
+          const delta = calculateWeightDelta(
+            user.startingWeight,
+            user.currentWeight,
+            user.targetWeight,
+            user.goalType
+          );
+          const pace = calculateRequiredPace(
+            user.currentWeight,
+            user.targetWeight,
+            betGroup.targetDeadline,
+            user.goalType
+          );
+          const inDanger = isDangerZone(
+            user.startingWeight,
+            user.currentWeight,
+            user.targetWeight,
+            betGroup.targetDeadline,
+            user.goalType
+          );
+
           return (
             <div
-              key={u.id}
-              className={`clean-card rounded-2xl p-4 border transition ${
-                isMe
-                  ? 'border-emerald-500/50 bg-emerald-500/5'
-                  : 'border-[var(--border-color)] bg-[var(--bg-card)]'
+              key={user.id}
+              className={`goal-card transition ${
+                isMe ? 'border-[var(--green)] bg-[var(--green-pale)]' : ''
               }`}
             >
-              <div className="flex items-center justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  {/* Rank Badge */}
-                  <div className={`w-6 h-6 rounded-lg flex items-center justify-center font-bold text-xs font-mono-num ${
-                    idx === 0
-                      ? 'bg-amber-400 text-zinc-950 shadow-xs'
-                      : idx === 1
-                      ? 'bg-zinc-200 dark:bg-zinc-700 text-[var(--text-primary)]'
-                      : idx === 2
-                      ? 'bg-amber-700/80 text-white'
-                      : 'bg-[var(--bg-card-subtle)] text-[var(--text-muted)]'
-                  }`}>
-                    {idx + 1}
-                  </div>
-
-                  <Avatar
-                    initials={u.avatarInitials || u.name}
-                    color={u.avatarColor || 'zinc'}
-                    size="md"
-                  />
-
-                  <div>
-                    <div className="flex items-center gap-1.5">
-                      <h4 className="font-semibold text-sm text-[var(--text-primary)]">
-                        {u.name} {isMe && <span className="text-emerald-600 dark:text-emerald-400 text-xs font-normal">(You)</span>}
-                      </h4>
-                      <span className="text-[10px] px-1.5 py-0.2 rounded font-semibold uppercase bg-[var(--bg-card-subtle)] text-[var(--text-secondary)]">
-                        {u.goalType === 'gain' ? 'Bulk' : 'Cut'}
-                      </span>
-                    </div>
-
-                    {/* Activity Icons & Delta */}
-                    <div className="flex items-center gap-1.5 mt-0.5">
-                      <div className="flex items-center gap-1 text-[var(--text-muted)]">
-                        {u.chosenDisciplines.map((d) => (
-                          <DisciplineIcon key={d} discipline={d} className="w-3.5 h-3.5" />
-                        ))}
-                      </div>
-                      <span className="text-[11px] text-[var(--text-secondary)] font-medium">
-                        • {u.deltaInfo.label}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Right: Progress & Percentage */}
-                <div className="text-right">
-                  <div className="text-base font-extrabold text-[var(--text-primary)] font-mono-num">
-                    {u.goalPercent}%
-                  </div>
-                  <div className="w-16 bg-[var(--bg-card-subtle)] rounded-full h-1.5 mt-1 overflow-hidden ml-auto">
-                    <div
-                      className={`h-full rounded-full ${
-                        u.inDanger ? 'bg-rose-500' : 'bg-emerald-500'
-                      }`}
-                      style={{ width: `${u.goalPercent}%` }}
-                    />
-                  </div>
-                </div>
+              <div className="flex flex-col items-center justify-center w-8 text-center shrink-0">
+                <span className="font-mono-num font-extrabold text-sm text-[var(--muted)]">
+                  #{idx + 1}
+                </span>
+                {idx === 0 && <Trophy size={14} className="text-[var(--amber)] mt-1" />}
               </div>
 
-              {/* Status / Danger row */}
-              <div className="mt-3 pt-2.5 border-t border-[var(--border-color)] flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2">
-                  <span className="flex items-center gap-1 text-amber-600 dark:text-amber-400 font-semibold font-mono-num text-[11px]">
-                    <Flame className="w-3 h-3 fill-amber-500 dark:fill-amber-400 text-amber-500 dark:text-amber-400" /> {u.streakCount}d
-                  </span>
-                  {u.inDanger && (
-                    <span className="px-1.5 py-0.5 rounded bg-rose-500/10 text-rose-500 text-[10px] font-semibold uppercase flex items-center gap-1">
-                      <AlertCircle className="w-3 h-3" /> Danger Zone
+              <div className="goal-card-icon">
+                <Avatar initials={user.avatarInitials} colorClass={user.avatarColor} size="md" />
+              </div>
+
+              <div className="goal-main">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="goal-meta">
+                      {user.goalType === 'gain' ? 'BULK' : 'CUT'}
                     </span>
-                  )}
+                    {isMe && (
+                      <span className="text-[9px] font-bold text-[var(--green-dark)] bg-[var(--surface)] px-1.5 py-0.2 rounded border border-[var(--line)]">
+                        YOU
+                      </span>
+                    )}
+                  </div>
+
+                  <span className={inDanger ? 'danger-pill' : 'active-pill'}>
+                    {inDanger ? 'Behind Pace' : 'On Track'}
+                  </span>
                 </div>
 
-                {!isMe && (
-                  <button
-                    onClick={() => setSelectedFriend(u)}
-                    className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center gap-1 font-medium"
-                  >
-                    <MessageSquare className="w-3 h-3" /> Nudge
-                  </button>
-                )}
+                <h3>{user.name}</h3>
+
+                <p className="flex items-center gap-2 text-[11px]">
+                  <span>
+                    Current: <strong>{user.currentWeight}kg</strong>
+                  </span>
+                  <span>·</span>
+                  <span>Target: <strong>{user.targetWeight}kg</strong></span>
+                  <span>·</span>
+                  <span className="font-semibold text-[var(--green-dark)]">
+                    {delta.label}
+                  </span>
+                </p>
+
+                {/* Progress Bar */}
+                <div className="w-full bg-[var(--surface-subtle)] rounded-full h-1.5 mt-2.5 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${
+                      inDanger ? 'bg-[var(--danger)]' : 'bg-[var(--green)]'
+                    }`}
+                    style={{ width: `${Math.min(100, Math.max(0, progress))}%` }}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between text-[10px] text-[var(--muted)] mt-2 font-mono-num">
+                  <span>
+                    {progress}% goal completed
+                  </span>
+                  <span>
+                    Req: {user.goalType === 'gain' ? '+' : '-'}{pace.pacePerWeek} kg/wk
+                  </span>
+                </div>
               </div>
             </div>
           );
         })}
       </div>
 
-      {/* 3. Locker Room Banter */}
-      <div className="clean-card rounded-2xl p-4 space-y-3">
-        <h3 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider flex items-center gap-1.5">
-          <MessageSquare className="w-3.5 h-3.5 text-[var(--text-muted)]" /> Friend Activity & Banter
-        </h3>
+      {/* Forfeit & Bet Rules Footer */}
+      <div className="section-title recent-title">
+        <h2>Wager Terms & Rules</h2>
+        <button className="card-link" onClick={onOpenEditBetModal}>
+          <Sliders size={13} /> Edit Terms
+        </button>
+      </div>
 
-        <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-          {banterList.slice(0, 5).map((b) => (
-            <div key={b.id} className="p-2.5 rounded-xl bg-[var(--bg-card-subtle)] text-xs space-y-0.5">
-              <div className="flex items-center justify-between text-[10px] text-[var(--text-muted)]">
-                <span className="font-semibold text-[var(--text-primary)]">
-                  {b.fromName.split(' ')[0]} ➔ {b.toName.split(' ')[0]}
-                </span>
-                <span>{b.timeAgo}</span>
-              </div>
-              <p className="text-[var(--text-secondary)]">{b.text}</p>
-            </div>
-          ))}
+      <div className="settings-card">
+        <div>
+          <b>Fair Goal Percentage Engine</b>
+          <p>
+            Whether cutting fat or gaining muscle, participants are evaluated by % of target weight achieved by Dec 31.
+          </p>
         </div>
+        <span className="storage-badge">RULE 1</span>
+      </div>
 
-        {/* Quick Send Input if Friend Selected */}
-        {selectedFriend && (
-          <form onSubmit={handlePost} className="pt-2 border-t border-[var(--border-color)] space-y-2">
-            <div className="flex items-center justify-between text-xs text-[var(--text-secondary)]">
-              <span>Nudge <strong className="text-[var(--text-primary)]">{selectedFriend.name}</strong>:</span>
-              <button
-                type="button"
-                onClick={() => setSelectedFriend(null)}
-                className="text-xs text-[var(--text-muted)] hover:text-[var(--text-primary)]"
-              >
-                Cancel
-              </button>
-            </div>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                placeholder={`Friendly message to ${selectedFriend.name.split(' ')[0]}...`}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                className="flex-1 bg-[var(--bg-card-subtle)] border border-[var(--border-color)] rounded-xl px-3 py-1.5 text-xs text-[var(--text-primary)] placeholder-[var(--text-muted)] focus:outline-none focus:border-emerald-500"
-              />
-              <button
-                type="submit"
-                className="px-3 py-1.5 rounded-xl bg-emerald-500 text-zinc-950 font-bold text-xs flex items-center justify-center shadow-xs"
-              >
-                <Send className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          </form>
-        )}
+      <div className="settings-card">
+        <div>
+          <b>Loser Forfeit Rule</b>
+          <p>{betGroup.forfeitDescription || 'The participant with the lowest progress treats the winner.'}</p>
+        </div>
+        <span className="storage-badge">PENALTY</span>
       </div>
     </div>
   );

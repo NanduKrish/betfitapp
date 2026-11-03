@@ -1,108 +1,108 @@
 import React, { useState } from 'react';
+import { X, Check } from 'lucide-react';
 import { DisciplineType } from '../types';
 import { DISCIPLINES } from '../data/constants';
 import { DisciplineIcon } from './DisciplineIcon';
-import { X, Check } from 'lucide-react';
 
 interface DisciplineModalProps {
   isOpen: boolean;
   onClose: () => void;
-  selectedDisciplines: DisciplineType[];
-  onSaveDisciplines: (newDisciplines: DisciplineType[]) => void;
+  currentDisciplines: DisciplineType[];
+  onSave: (disciplines: DisciplineType[]) => void;
 }
+
+const ALL_DISCIPLINES: DisciplineType[] = [
+  'gym',
+  'swimming',
+  'running',
+  'walking',
+  'diet',
+  'cycling',
+  'calisthenics',
+  'custom'
+];
 
 export const DisciplineModal: React.FC<DisciplineModalProps> = ({
   isOpen,
   onClose,
-  selectedDisciplines,
-  onSaveDisciplines
+  currentDisciplines,
+  onSave
 }) => {
-  const [selected, setSelected] = useState<DisciplineType[]>(selectedDisciplines);
-
   if (!isOpen) return null;
 
-  const toggle = (id: DisciplineType) => {
-    if (selected.includes(id)) {
-      if (selected.length === 1) return; // Keep at least one
-      setSelected(selected.filter((item) => item !== id));
+  const [selected, setSelected] = useState<DisciplineType[]>(currentDisciplines);
+  const [error, setError] = useState('');
+
+  const toggle = (d: DisciplineType) => {
+    if (selected.includes(d)) {
+      if (selected.length === 1) {
+        setError('You must keep at least 1 habit to maintain your daily streak.');
+        return;
+      }
+      setSelected(selected.filter((item) => item !== d));
     } else {
-      setSelected([...selected, id]);
+      setSelected([...selected, d]);
     }
+    setError('');
   };
 
   const handleSave = () => {
-    onSaveDisciplines(selected);
+    if (selected.length === 0) {
+      setError('Please select at least one habit.');
+      return;
+    }
+    onSave(selected);
     onClose();
   };
 
-  const allList = Object.values(DISCIPLINES);
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-sm animate-in fade-in duration-100">
-      <div className="relative w-full max-w-sm rounded-3xl bg-[var(--bg-card)] border border-[var(--border-color)] shadow-2xl p-5 space-y-4 max-h-[85vh] overflow-y-auto text-[var(--text-primary)]">
-        <div className="flex items-center justify-between">
+    <div
+      className="modal-backdrop"
+      onMouseDown={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div className="modal">
+        <div className="modal-head">
           <div>
-            <h3 className="text-base font-bold text-[var(--text-primary)]">Choose Your Habits</h3>
-            <p className="text-xs text-[var(--text-secondary)]">Select what you track for the bet</p>
+            <h2>Choose Your Daily Habits</h2>
+            <p>
+              Select the disciplines you commit to. You must check off all chosen activities every day to build your streak.
+            </p>
           </div>
-          <button
-            onClick={onClose}
-            className="p-1 rounded-lg text-[var(--text-muted)] hover:text-[var(--text-primary)] hover:bg-[var(--bg-card-subtle)] transition"
-          >
-            <X className="w-4 h-4" />
+          <button onClick={onClose}>
+            <X size={18} />
           </button>
         </div>
 
-        <div className="space-y-2">
-          {allList.map((d) => {
-            const isChosen = selected.includes(d.id);
-            return (
-              <button
-                key={d.id}
-                type="button"
-                onClick={() => toggle(d.id)}
-                className={`w-full text-left p-3 rounded-xl border transition flex items-center justify-between ${
-                  isChosen
-                    ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-700 dark:text-emerald-300'
-                    : 'bg-[var(--bg-card-subtle)] border-[var(--border-color)] text-[var(--text-primary)] hover:border-zinc-400'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${
-                    isChosen ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300' : 'bg-[var(--bg-card)] text-[var(--text-secondary)]'
-                  }`}>
-                    <DisciplineIcon discipline={d.id} className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className="font-bold text-xs text-[var(--text-primary)]">{d.label}</h4>
-                    <p className="text-[10px] text-[var(--text-secondary)] line-clamp-1">{d.description}</p>
-                  </div>
-                </div>
+        <div className="modal-form">
+          <div className="activity-choices">
+            {ALL_DISCIPLINES.map((d) => {
+              const meta = DISCIPLINES[d];
+              const isSelected = selected.includes(d);
+              return (
+                <button
+                  key={d}
+                  type="button"
+                  className={isSelected ? 'chosen' : ''}
+                  onClick={() => toggle(d)}
+                >
+                  <DisciplineIcon discipline={d} className="w-4 h-4 shrink-0" />
+                  <span>{meta.label}</span>
+                  {isSelected && <Check size={16} className="choice-check shrink-0" />}
+                </button>
+              );
+            })}
+          </div>
 
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs ${
-                  isChosen ? 'bg-emerald-500 text-white font-bold' : 'border border-[var(--border-color)]'
-                }`}>
-                  {isChosen && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                </div>
-              </button>
-            );
-          })}
-        </div>
+          <div className="modal-hint">
+            {selected.length} habits selected. Your consecutive streak will depend on completing all of them each day.
+          </div>
 
-        <div className="flex gap-2.5 pt-1">
-          <button
-            type="button"
-            onClick={onClose}
-            className="flex-1 py-2 rounded-xl bg-[var(--bg-card-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] text-xs font-semibold transition"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={handleSave}
-            className="flex-1 py-2 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-bold transition shadow-xs"
-          >
-            Save Selection
+          {error && <p className="error">{error}</p>}
+
+          <button className="btn-primary full-btn" onClick={handleSave}>
+            Save habits <Check size={16} />
           </button>
         </div>
       </div>

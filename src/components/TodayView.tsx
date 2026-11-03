@@ -1,5 +1,19 @@
 import React from 'react';
 import confetti from 'canvas-confetti';
+import {
+  Weight,
+  Trophy,
+  Flame,
+  Check,
+  Plus,
+  ChevronRight,
+  TrendingDown,
+  TrendingUp,
+  AlertCircle,
+  Sliders,
+  Share2,
+  Activity
+} from 'lucide-react';
 import { UserProfile, BetGroup, ActivityLog, WeighIn } from '../types';
 import { DISCIPLINES } from '../data/constants';
 import { DisciplineIcon } from './DisciplineIcon';
@@ -10,18 +24,6 @@ import {
   calculateRequiredPace,
   isDangerZone
 } from '../utils/calculations';
-import {
-  Flame,
-  Check,
-  Plus,
-  ChevronRight,
-  TrendingDown,
-  TrendingUp,
-  AlertCircle,
-  Sliders,
-  Share2,
-  Trophy
-} from 'lucide-react';
 
 interface TodayViewProps {
   currentUser: UserProfile;
@@ -41,12 +43,15 @@ export const TodayView: React.FC<TodayViewProps> = ({
   allUsers,
   betGroup,
   todayActivities,
+  weighIns,
   onToggleActivity,
   onOpenWeighInModal,
   onOpenDisciplineModal,
   onOpenShareModal,
   onNavigateToTab
 }) => {
+  const firstName = currentUser.name.split(' ')[0] || 'Friend';
+
   const goalProgress = calculateGoalProgress(
     currentUser.startingWeight,
     currentUser.currentWeight,
@@ -82,14 +87,14 @@ export const TodayView: React.FC<TodayViewProps> = ({
   const handleCheckin = (act: ActivityLog) => {
     const next = !act.completed;
     onToggleActivity(act.id, next);
-    
-    // Only celebrate with confetti if completing the final activity of the day!
+
+    // Only celebrate with confetti if completing the final activity of the day
     if (next && completedCount + 1 === todayActivities.length) {
       confetti({
         particleCount: 40,
         spread: 60,
         origin: { y: 0.75 },
-        colors: ['#10b981', '#34d399', '#f59e0b']
+        colors: ['#6f895f', '#8ba87a', '#d4953c']
       });
     }
   };
@@ -102,255 +107,218 @@ export const TodayView: React.FC<TodayViewProps> = ({
   });
 
   return (
-    <div className="mobile-container space-y-4 pb-20 pt-1">
-      {/* 1. Modern Bet Overview Card */}
-      <div className="clean-card rounded-2xl p-3.5 flex items-center justify-between text-xs text-[var(--text-secondary)] hover:border-[var(--border-hover)] transition">
-        <div
-          onClick={() => onNavigateToTab('bet')}
-          className="flex items-center gap-2.5 cursor-pointer flex-1"
-        >
-          <div className="w-8 h-8 rounded-xl bg-amber-500/10 text-amber-600 dark:text-amber-400 flex items-center justify-center shrink-0">
-            <Trophy className="w-4 h-4" />
-          </div>
-          <div>
-            <div className="font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
-              <span>{betGroup.title}</span>
-              <span className="text-[10px] text-amber-600 dark:text-amber-400 font-bold bg-amber-500/10 px-1.5 py-0.2 rounded font-mono-num">
-                {betGroup.currency || '₹'}{betGroup.potAmount}
-              </span>
-            </div>
-            <div className="text-[11px] text-[var(--text-secondary)] font-mono-num font-medium">
-              {pace.daysLeft} days left until Dec 31
-            </div>
-          </div>
+    <div>
+      {/* Page Header */}
+      <div className="page-head">
+        <div>
+          <div className="eyebrow">YOUR ARENA</div>
+          <h1>Hi, {firstName}.</h1>
+          <p>Consistency beats motivation. Every day counts toward the December deadline.</p>
         </div>
-
-        <button
-          onClick={onOpenShareModal}
-          className="py-1 px-2.5 rounded-xl bg-[var(--bg-card-subtle)] hover:bg-[var(--border-hover)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition flex items-center gap-1 text-[11px] font-medium"
-          title="Share Invite Link"
-        >
-          <Share2 className="w-3.5 h-3.5" />
-          <span>Invite</span>
+        <button className="btn-primary" onClick={onOpenWeighInModal}>
+          <Plus size={16} /> Log weight
         </button>
       </div>
 
-      {/* 2. Weight Progress Card */}
-      <div className="clean-card rounded-2xl p-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
-              {currentUser.goalType === 'gain' ? 'Bulking Progress' : 'Weight Progress'}
-            </span>
-            <span className="text-[10px] px-2 py-0.5 rounded-md font-semibold uppercase bg-[var(--bg-card-subtle)] text-[var(--text-secondary)]">
-              {currentUser.goalType === 'gain' ? 'Bulk' : 'Cut'}
-            </span>
-          </div>
-
-          <button
-            onClick={onOpenWeighInModal}
-            className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hover:opacity-80 flex items-center gap-1"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" /> Log Weight
-          </button>
-        </div>
-
-        {/* Big Weight Figures */}
-        <div className="flex items-baseline justify-between">
-          <div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-4xl font-extrabold text-[var(--text-primary)] font-mono-num tracking-tight">
-                {currentUser.currentWeight}
-              </span>
-              <span className="text-sm font-semibold text-[var(--text-secondary)]">
-                {currentUser.weightUnit}
-              </span>
-            </div>
-
-            <div className={`text-xs font-medium flex items-center gap-1 mt-0.5 ${
-              weightDelta.onTrackDirection
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : 'text-amber-500'
-            }`}>
-              {currentUser.goalType === 'gain' ? (
-                <TrendingUp className="w-3.5 h-3.5" />
-              ) : (
-                <TrendingDown className="w-3.5 h-3.5" />
-              )}
-              <span>{weightDelta.label} (Baseline: {currentUser.startingWeight})</span>
-            </div>
-          </div>
-
-          <div className="text-right">
-            <span className="text-xs text-[var(--text-secondary)] block">Target for Dec 31</span>
-            <span className="text-lg font-bold text-[var(--text-primary)] font-mono-num">
-              {currentUser.targetWeight} {currentUser.weightUnit}
-            </span>
+      {/* Hero Today Card */}
+      <div className="today-card">
+        <div className="today-copy">
+          <span className="subtle-label">TODAY</span>
+          <h2>
+            What's one thing<br />
+            you can do for yourself?
+          </h2>
+          <p>
+            {completedCount === todayActivities.length && todayActivities.length > 0
+              ? 'All chosen habits completed for today. Your consecutive streak is secured.'
+              : `Complete all ${todayActivities.length} chosen habits to build your daily streak.`}
+          </p>
+          <div className="flex items-center gap-3">
+            <button className="btn-primary" onClick={onOpenDisciplineModal}>
+              <Sliders size={16} /> Edit habits
+            </button>
+            <button className="btn-secondary" onClick={onOpenShareModal}>
+              <Share2 size={16} /> Invite friends
+            </button>
           </div>
         </div>
 
-        {/* Progress Bar */}
-        <div className="space-y-1.5">
-          <div className="flex justify-between text-xs font-semibold">
-            <span className="text-[var(--text-secondary)]">
-              {currentUser.goalType === 'gain' ? 'Bulk Goal Completed' : 'Weight Loss Goal'}
-            </span>
-            <span className="text-[var(--text-primary)] font-mono-num font-bold">{goalProgress}%</span>
-          </div>
-          <div className="w-full bg-[var(--bg-card-subtle)] rounded-full h-2 overflow-hidden">
-            <div
-              className={`h-full rounded-full transition-all duration-500 ${
-                inDanger ? 'bg-rose-500' : 'bg-emerald-500'
-              }`}
-              style={{ width: `${goalProgress}%` }}
-            />
-          </div>
+        <div className="today-illustration">
+          <div className="circle circle-a" />
+          <div className="circle circle-b" />
+          <Activity size={38} />
         </div>
+      </div>
 
-        {/* Pace Indicator */}
-        <div className="pt-2 border-t border-[var(--border-color)] flex items-center justify-between text-xs">
-          <div className="flex items-center gap-1.5 text-[var(--text-secondary)]">
-            {inDanger ? (
-              <span className="flex items-center gap-1 text-rose-500 font-semibold">
-                <AlertCircle className="w-3.5 h-3.5" /> Behind target pace
-              </span>
+      {/* 3-Card Overview Grid */}
+      <div className="section-title">
+        <h2>Your overview</h2>
+        <span>Based on verified check-ins</span>
+      </div>
+
+      <div className="overview-grid">
+        {/* Card 1: Current Weight */}
+        <div className="info-card">
+          <div className="info-top">
+            <span>Current weight</span>
+            <Weight size={16} />
+          </div>
+          <strong>
+            {currentUser.currentWeight} <small>{currentUser.weightUnit}</small>
+          </strong>
+          <p className="flex items-center gap-1.5">
+            {currentUser.goalType === 'gain' ? (
+              <TrendingUp size={13} className="text-[var(--green)]" />
             ) : (
-              <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400 font-semibold">
-                <span className="w-2 h-2 rounded-full bg-emerald-500" /> On pace
-              </span>
+              <TrendingDown size={13} className="text-[var(--green)]" />
             )}
-          </div>
-          <span className="text-[var(--text-secondary)] font-mono-num text-[11px]">
-            Target rate: <strong className="text-[var(--text-primary)]">{currentUser.goalType === 'gain' ? '+' : '-'}{pace.pacePerWeek} kg/wk</strong>
-          </span>
-        </div>
-      </div>
-
-      {/* 3. Today's Habits (The Daily Core) */}
-      <div className="clean-card rounded-2xl p-5 space-y-3.5">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-bold text-[var(--text-primary)]">Today's Habits</h3>
-            <p className="text-xs text-[var(--text-secondary)]">
-              {completedCount} of {todayActivities.length} completed
-              {isDayFullyComplete ? ' • Streak secured for today!' : ' • Complete all to build streak'}
-            </p>
-          </div>
-
-          <button
-            onClick={onOpenDisciplineModal}
-            className="text-xs text-[var(--text-secondary)] hover:text-[var(--text-primary)] flex items-center gap-1 py-1 px-2 rounded-lg hover:bg-[var(--bg-card-subtle)] transition"
-          >
-            <Sliders className="w-3.5 h-3.5" /> Edit
+            <span>
+              {weightDelta.label} (Baseline: {currentUser.startingWeight} {currentUser.weightUnit})
+            </span>
+          </p>
+          <button className="card-link" onClick={onOpenWeighInModal}>
+            Update weight <ChevronRight size={13} />
           </button>
         </div>
 
-        {/* Tactile Habit Cards */}
-        <div className="space-y-2">
-          {todayActivities.map((act) => {
-            const meta = DISCIPLINES[act.discipline] || DISCIPLINES.custom;
-            return (
-              <button
-                key={act.id}
-                onClick={() => handleCheckin(act)}
-                className={`w-full clean-card-interactive text-left p-3.5 rounded-xl flex items-center justify-between gap-3 border transition ${
-                  act.completed
-                    ? 'bg-emerald-500/10 border-emerald-500/40 text-emerald-700 dark:text-emerald-300'
-                    : 'bg-[var(--bg-card)] hover:bg-[var(--bg-card-subtle)] border-[var(--border-color)] text-[var(--text-primary)]'
-                }`}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center transition ${
-                    act.completed
-                      ? 'bg-emerald-500/20 text-emerald-600 dark:text-emerald-300'
-                      : 'bg-[var(--bg-card-subtle)] text-[var(--text-secondary)]'
-                  }`}>
-                    <DisciplineIcon discipline={act.discipline} className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <h4 className={`font-semibold text-sm leading-snug ${
-                      act.completed ? 'line-through opacity-75' : 'text-[var(--text-primary)]'
-                    }`}>
-                      {meta.label}
-                    </h4>
-                    <span className="text-[11px] text-[var(--text-secondary)] font-normal">
-                      {act.completed ? 'Completed' : meta.description}
-                    </span>
-                  </div>
-                </div>
-
-                <div className={`w-6 h-6 rounded-full flex items-center justify-center transition-all ${
-                  act.completed
-                    ? 'bg-emerald-500 text-white font-bold shadow-xs'
-                    : 'border-2 border-[var(--border-color)] hover:border-zinc-400'
-                }`}>
-                  {act.completed && <Check className="w-3.5 h-3.5 stroke-[3]" />}
-                </div>
-              </button>
-            );
-          })}
+        {/* Card 2: Active Wager */}
+        <div className="info-card">
+          <div className="info-top">
+            <span>Active wager</span>
+            <Trophy size={16} />
+          </div>
+          <strong className="goal-name">{betGroup.title}</strong>
+          <p>
+            {betGroup.currency || '₹'}
+            {betGroup.potAmount} Pot · {pace.daysLeft} days until Dec 31
+          </p>
+          <button className="card-link" onClick={() => onNavigateToTab('The Bet')}>
+            View standings <ChevronRight size={13} />
+          </button>
         </div>
 
-        {/* Streak Info Footer */}
-        <div className="pt-2 flex items-center justify-between text-xs text-[var(--text-secondary)]">
-          <span className="flex items-center gap-1.5 font-semibold text-amber-600 dark:text-amber-400 font-mono-num">
-            <Flame className="w-4 h-4 fill-amber-500 dark:fill-amber-400 text-amber-500 dark:text-amber-400" />
-            {currentUser.streakCount} Day Consecutive Streak
-          </span>
-          <span className="text-[11px] text-[var(--text-muted)]">
-            {currentUser.streakShields} shield banked
-          </span>
+        {/* Card 3: Daily Habit Streak */}
+        <div className="info-card">
+          <div className="info-top">
+            <span>Habit streak</span>
+            <Flame size={16} />
+          </div>
+          <strong>
+            {currentUser.streakCount} <small>{currentUser.streakCount === 1 ? 'day' : 'days'}</small>
+          </strong>
+          <p>
+            {completedCount} of {todayActivities.length} completed today
+            {isDayFullyComplete ? ' · Streak secured!' : ' · Complete all to grow'}
+          </p>
+          <button className="card-link" onClick={onOpenDisciplineModal}>
+            Manage habits <ChevronRight size={13} />
+          </button>
         </div>
       </div>
 
-      {/* 4. Mini Leaderboard Preview */}
-      <div
-        onClick={() => onNavigateToTab('bet')}
-        className="cursor-pointer clean-card rounded-2xl p-4 hover:border-[var(--border-hover)] transition space-y-3"
-      >
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
-            Current Standings
-          </span>
-          <span className="text-xs text-emerald-600 dark:text-emerald-400 font-semibold flex items-center gap-0.5">
-            Full Board <ChevronRight className="w-3.5 h-3.5" />
-          </span>
-        </div>
+      {/* Today's Habits Section */}
+      <div className="section-title recent-title">
+        <h2>Today's Habits</h2>
+        <span className="font-semibold text-[var(--muted)]">
+          {completedCount}/{todayActivities.length} completed
+        </span>
+      </div>
 
-        <div className="space-y-2">
-          {rankedUsers.slice(0, 4).map((u, idx) => {
-            const p = calculateGoalProgress(u.startingWeight, u.currentWeight, u.targetWeight, u.goalType);
-            const isMe = u.id === currentUser.id;
-            return (
+      <div className="list-card">
+        {todayActivities.map((act) => {
+          const meta = DISCIPLINES[act.discipline] || DISCIPLINES.custom;
+          return (
+            <div
+              key={act.id}
+              onClick={() => handleCheckin(act)}
+              className="activity-item cursor-pointer hover:bg-[var(--surface-subtle)] px-2 -mx-2 rounded-lg transition"
+            >
               <div
-                key={u.id}
-                className={`flex items-center justify-between py-1.5 px-2 rounded-xl text-xs ${
-                  isMe
-                    ? 'bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 font-semibold'
-                    : 'text-[var(--text-primary)]'
+                className={`activity-icon transition-colors ${
+                  act.completed ? 'bg-[var(--green-pale)] text-[var(--green-dark)]' : ''
                 }`}
               >
-                <div className="flex items-center gap-2.5">
-                  <span className="text-[var(--text-muted)] font-mono-num text-[11px] w-3">
-                    {idx + 1}
-                  </span>
-                  <Avatar
-                    initials={u.avatarInitials || u.name}
-                    color={u.avatarColor || 'zinc'}
-                    size="sm"
-                  />
-                  <span className="truncate max-w-[120px] font-medium">{u.name}</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono-num font-semibold text-[11px]">{p}%</span>
-                  <div className="w-14 bg-[var(--bg-card-subtle)] rounded-full h-1.5 overflow-hidden">
-                    <div className="bg-emerald-500 h-full rounded-full" style={{ width: `${p}%` }} />
-                  </div>
-                </div>
+                <DisciplineIcon discipline={act.discipline} className="w-4 h-4" />
               </div>
-            );
-          })}
-        </div>
+
+              <div className="activity-detail">
+                <b className={act.completed ? 'line-through opacity-70' : ''}>{meta.label}</b>
+                <small>{act.completed ? 'Completed for today' : meta.description}</small>
+              </div>
+
+              <div
+                className={`w-6 h-6 rounded-full flex items-center justify-center border transition-all ${
+                  act.completed
+                    ? 'bg-[var(--green)] border-[var(--green)] text-white'
+                    : 'border-[var(--line)] hover:border-[var(--muted)]'
+                }`}
+              >
+                {act.completed && <Check size={14} strokeWidth={3} />}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Mini Group Standings */}
+      <div className="section-title recent-title">
+        <h2>Group Standings</h2>
+        <button className="card-link" onClick={() => onNavigateToTab('The Bet')}>
+          Full arena <ChevronRight size={13} />
+        </button>
+      </div>
+
+      <div className="list-card">
+        {rankedUsers.slice(0, 4).map((u, index) => {
+          const progress = calculateGoalProgress(
+            u.startingWeight,
+            u.currentWeight,
+            u.targetWeight,
+            u.goalType
+          );
+          const isUserInDanger = isDangerZone(
+            u.startingWeight,
+            u.currentWeight,
+            u.targetWeight,
+            betGroup.targetDeadline,
+            u.goalType
+          );
+
+          return (
+            <div key={u.id} className="activity-item">
+              <div className="w-5 text-xs font-bold text-[var(--muted)] font-mono-num">
+                #{index + 1}
+              </div>
+
+              <Avatar initials={u.avatarInitials} colorClass={u.avatarColor} size="sm" />
+
+              <div className="activity-detail">
+                <div className="flex items-center gap-2">
+                  <b>{u.name}</b>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--muted)] bg-[var(--surface-subtle)] px-1.5 py-0.5 rounded">
+                    {u.goalType === 'gain' ? 'Bulk' : 'Cut'}
+                  </span>
+                </div>
+                <small>
+                  {u.currentWeight}kg · Target: {u.targetWeight}kg
+                </small>
+              </div>
+
+              <div className="text-right">
+                <div className="font-bold text-xs text-[var(--text)] font-mono-num">
+                  {progress}%
+                </div>
+                {isUserInDanger ? (
+                  <span className="text-[9px] text-[var(--danger)] font-semibold flex items-center gap-1 justify-end">
+                    <AlertCircle size={10} /> Behind
+                  </span>
+                ) : (
+                  <span className="text-[9px] text-[var(--green)] font-semibold">On track</span>
+                )}
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -1,12 +1,11 @@
 import React from 'react';
-import { UserProfile, WeighIn, BetGroup } from '../types';
-import { calculateWeightDelta } from '../utils/calculations';
-import { Plus, TrendingDown, TrendingUp } from 'lucide-react';
+import { Plus, TrendingDown, TrendingUp, Calendar, Weight } from 'lucide-react';
+import { UserProfile, WeighIn } from '../types';
+import { calculateWeightDelta, calculateGoalProgress } from '../utils/calculations';
 
 interface HistoryViewProps {
   currentUser: UserProfile;
   weighIns: WeighIn[];
-  betGroup: BetGroup;
   onOpenWeighInModal: () => void;
 }
 
@@ -15,173 +14,194 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
   weighIns,
   onOpenWeighInModal
 }) => {
-  const deltaInfo = calculateWeightDelta(
+  const sortedWeighIns = [...weighIns].sort(
+    (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+  );
+
+  const delta = calculateWeightDelta(
     currentUser.startingWeight,
     currentUser.currentWeight,
     currentUser.targetWeight,
     currentUser.goalType
   );
 
-  // SVG dimensions for mobile
-  const width = 360;
-  const height = 140;
-  const padding = { top: 20, right: 20, bottom: 25, left: 35 };
+  const progress = calculateGoalProgress(
+    currentUser.startingWeight,
+    currentUser.currentWeight,
+    currentUser.targetWeight,
+    currentUser.goalType
+  );
 
-  const weights = weighIns.map((w) => w.weight);
+  // SVG Sparkline calculation
+  const chronological = [...weighIns].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime()
+  );
+
+  const weights = chronological.map((w) => w.weight);
   const minW = Math.min(...weights, currentUser.targetWeight, currentUser.startingWeight) - 1;
-  const maxW = Math.max(...weights, currentUser.startingWeight, currentUser.targetWeight) + 1;
-  const range = Math.max(1, maxW - minW);
+  const maxW = Math.max(...weights, currentUser.targetWeight, currentUser.startingWeight) + 1;
+  const range = maxW - minW || 1;
 
-  const getY = (w: number) => {
-    return height - padding.bottom - ((w - minW) / range) * (height - padding.top - padding.bottom);
-  };
+  const width = 600;
+  const height = 180;
+  const padding = 20;
 
-  const getX = (idx: number, count: number) => {
-    if (count <= 1) return width / 2;
-    return padding.left + (idx / (count - 1)) * (width - padding.left - padding.right);
-  };
-
-  const points = weighIns.map((w, i) => ({
-    x: getX(i, weighIns.length),
-    y: getY(w.weight),
-    data: w
-  }));
-
-  const pathD = points.length > 0
-    ? `M ${points.map((p) => `${p.x},${p.y}`).join(' L ')}`
-    : '';
-
-  const targetY = getY(currentUser.targetWeight);
+  const points = chronological.map((w, idx) => {
+    const x = padding + (idx / Math.max(1, chronological.length - 1)) * (width - padding * 2);
+    const y = height - padding - ((w.weight - minW) / range) * (height - padding * 2);
+    return `${x},${y}`;
+  }).join(' ');
 
   return (
-    <div className="mobile-container space-y-4 pb-20 pt-1">
-      {/* 1. Header Card */}
-      <div className="clean-card rounded-2xl p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <span className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
-              {currentUser.goalType === 'gain' ? 'Bulking History' : 'Weight Journey'}
-            </span>
-            <span className="text-[10px] px-1.5 py-0.2 rounded font-bold uppercase bg-[var(--bg-card-subtle)] text-[var(--text-secondary)]">
-              {currentUser.goalType === 'gain' ? '📈 Gain' : '📉 Loss'}
-            </span>
-          </div>
-
-          <button
-            onClick={onOpenWeighInModal}
-            className="text-xs font-bold px-3 py-1.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-zinc-950 flex items-center gap-1 transition shadow-xs"
-          >
-            <Plus className="w-3.5 h-3.5 stroke-[2.5]" /> Log Weight
-          </button>
+    <div>
+      {/* Page Header */}
+      <div className="page-head">
+        <div>
+          <div className="eyebrow">YOUR JOURNEY</div>
+          <h1>Weight Progress</h1>
+          <p>
+            Track your official weigh-ins toward your {currentUser.goalType === 'gain' ? 'bulking' : 'weight loss'} goal.
+          </p>
         </div>
+        <button className="btn-primary" onClick={onOpenWeighInModal}>
+          <Plus size={16} /> Log weight
+        </button>
+      </div>
 
-        <div className="flex items-baseline justify-between pt-1">
-          <div>
-            <div className="text-3xl font-extrabold text-[var(--text-primary)] font-mono-num">
-              {currentUser.currentWeight} <span className="text-sm font-normal text-[var(--text-secondary)]">{currentUser.weightUnit}</span>
-            </div>
-            <div className={`text-xs font-medium flex items-center gap-1 mt-0.5 ${
-              deltaInfo.onTrackDirection ? 'text-emerald-600 dark:text-emerald-400' : 'text-amber-500'
-            }`}>
-              {currentUser.goalType === 'gain' ? (
-                <TrendingUp className="w-3.5 h-3.5" />
-              ) : (
-                <TrendingDown className="w-3.5 h-3.5" />
-              )}
-              <span>{deltaInfo.label} from start</span>
-            </div>
-          </div>
-
-          <div className="text-right text-xs">
-            <span className="text-[var(--text-secondary)] block">Target for Dec 31</span>
-            <span className="text-sm font-bold text-emerald-600 dark:text-emerald-400 font-mono-num">
-              {currentUser.targetWeight} {currentUser.weightUnit}
-            </span>
-          </div>
+      {/* Progress Metrics Summary */}
+      <div className="progress-summary">
+        <div>
+          <span>CURRENT WEIGHT</span>
+          <b>
+            {currentUser.currentWeight} {currentUser.weightUnit}
+          </b>
         </div>
-
-        {/* Minimal Clean Sparkline */}
-        <div className="pt-2">
-          <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-auto">
-            {/* Target Line */}
-            <line
-              x1={padding.left}
-              y1={targetY}
-              x2={width - padding.right}
-              y2={targetY}
-              stroke="#10b981"
-              strokeWidth="1.2"
-              strokeDasharray="3 3"
-              opacity="0.7"
-            />
-            <text
-              x={padding.left - 4}
-              y={targetY + 3}
-              textAnchor="end"
-              fill="#10b981"
-              fontSize="9"
-              fontWeight="bold"
-              className="font-mono-num"
-            >
-              {currentUser.targetWeight}
-            </text>
-
-            {/* Path */}
-            {pathD && (
-              <path
-                d={pathD}
-                fill="none"
-                stroke="#10b981"
-                strokeWidth="2.5"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-              />
-            )}
-
-            {/* Points */}
-            {points.map((p) => (
-              <circle
-                key={p.data.id}
-                cx={p.x}
-                cy={p.y}
-                r="4.5"
-                fill="#10b981"
-                stroke="var(--bg-card)"
-                strokeWidth="2"
-              />
-            ))}
-          </svg>
+        <div>
+          <span>STARTING POINT</span>
+          <b>
+            {currentUser.startingWeight} {currentUser.weightUnit}
+          </b>
+        </div>
+        <div>
+          <span>TARGET (DEC 31)</span>
+          <b>
+            {currentUser.targetWeight} {currentUser.weightUnit}
+          </b>
+        </div>
+        <div>
+          <span>GOAL PROGRESS</span>
+          <b>{progress}%</b>
         </div>
       </div>
 
-      {/* 2. Chronological Log List */}
-      <div className="clean-card rounded-2xl p-4 space-y-2.5">
-        <h3 className="text-xs font-semibold text-[var(--text-secondary)] uppercase tracking-wider">
-          Weigh-In History ({weighIns.length})
-        </h3>
+      {/* Trajectory Sparkline Curve */}
+      {chronological.length > 1 && (
+        <div className="section-title">
+          <h2>Weight Curve</h2>
+          <span>{delta.label}</span>
+        </div>
+      )}
 
-        <div className="divide-y divide-[var(--border-color)]">
-          {[...weighIns].reverse().map((w) => {
-            const diff = (w.weight - currentUser.startingWeight).toFixed(1);
+      {chronological.length > 1 && (
+        <div className="clean-card rounded-2xl p-5 mb-8 bg-[var(--surface)] border border-[var(--line)]">
+          <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-40 overflow-visible">
+            {/* Target Line */}
+            {currentUser.targetWeight && (
+              <line
+                x1={padding}
+                y1={height - padding - ((currentUser.targetWeight - minW) / range) * (height - padding * 2)}
+                x2={width - padding}
+                y2={height - padding - ((currentUser.targetWeight - minW) / range) * (height - padding * 2)}
+                stroke="var(--green)"
+                strokeDasharray="4 4"
+                strokeWidth="1.2"
+                opacity="0.6"
+              />
+            )}
+
+            {/* Trajectory Line */}
+            <polyline
+              fill="none"
+              stroke="var(--text)"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              points={points}
+            />
+
+            {/* Data Dots */}
+            {chronological.map((w, idx) => {
+              const cx = padding + (idx / Math.max(1, chronological.length - 1)) * (width - padding * 2);
+              const cy = height - padding - ((w.weight - minW) / range) * (height - padding * 2);
+              const isLatest = idx === chronological.length - 1;
+              return (
+                <g key={w.id}>
+                  <circle
+                    cx={cx}
+                    cy={cy}
+                    r={isLatest ? 5 : 3.5}
+                    fill={isLatest ? 'var(--green)' : 'var(--surface)'}
+                    stroke="var(--text)"
+                    strokeWidth="2"
+                  />
+                </g>
+              );
+            })}
+          </svg>
+          <div className="flex justify-between text-[10px] text-[var(--muted)] font-mono-num mt-2 pt-2 border-t border-[var(--line)]">
+            <span>Started: {chronological[0]?.date}</span>
+            <span className="text-[var(--green)] font-semibold">Target: {currentUser.targetWeight} {currentUser.weightUnit}</span>
+            <span>Latest: {chronological[chronological.length - 1]?.date}</span>
+          </div>
+        </div>
+      )}
+
+      {/* History Log Table */}
+      <div className="section-title">
+        <h2>Check-in History</h2>
+        <span>{sortedWeighIns.length} recorded entries</span>
+      </div>
+
+      {sortedWeighIns.length > 0 ? (
+        <div className="list-card weight-history">
+          <div className="list-heading">Weigh-in Records</div>
+          {sortedWeighIns.map((log, index) => {
+            const nextLog = sortedWeighIns[index + 1];
+            const change = nextLog ? log.weight - nextLog.weight : null;
+
             return (
-              <div key={w.id} className="py-2.5 flex items-center justify-between text-xs">
+              <div key={log.id} className="weight-row">
                 <div>
-                  <span className="font-semibold text-[var(--text-primary)] font-mono-num">{w.date}</span>
-                  {w.notes && <p className="text-[11px] text-[var(--text-muted)] mt-0.5">{w.notes}</p>}
+                  <b>
+                    {log.weight} {currentUser.weightUnit}
+                  </b>
+                  <small>{log.date} {log.notes ? `· ${log.notes}` : ''}</small>
                 </div>
-                <div className="text-right">
-                  <span className="font-bold text-emerald-600 dark:text-emerald-400 font-mono-num text-sm">
-                    {w.weight} {currentUser.weightUnit}
+
+                {change !== null && (
+                  <span className="change-note">
+                    {change > 0 ? '↑' : change < 0 ? '↓' : '—'}{' '}
+                    {Math.abs(change).toFixed(1)} {currentUser.weightUnit}
                   </span>
-                  <span className="text-[10px] text-[var(--text-muted)] block font-mono-num">
-                    {parseFloat(diff) >= 0 ? `+${diff}` : diff}kg from start
-                  </span>
-                </div>
+                )}
               </div>
             );
           })}
         </div>
-      </div>
+      ) : (
+        <div className="empty-card tall">
+          <div className="empty-icon">
+            <Weight size={22} />
+          </div>
+          <b>Your progress starts here</b>
+          <p>
+            Add your baseline weight check-in to start mapping your weight curve toward the December deadline.
+          </p>
+          <button className="btn-primary" onClick={onOpenWeighInModal}>
+            <Plus size={15} /> Add first weight entry
+          </button>
+        </div>
+      )}
     </div>
   );
 };

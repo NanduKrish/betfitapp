@@ -1,5 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { UserProfile, BetGroup, WeighIn, ActivityLog, BanterItem, DisciplineType } from './types';
+import {
+  UserProfile,
+  BetGroup,
+  WeighIn,
+  ActivityLog,
+  BanterItem,
+  DisciplineType
+} from './types';
 import {
   INITIAL_BET_GROUP,
   INITIAL_USERS,
@@ -7,25 +14,27 @@ import {
   INITIAL_TODAY_ACTIVITIES,
   INITIAL_BANTER
 } from './data/initialData';
-import { Header } from './components/Header';
-import { Navigation } from './components/Navigation';
+import { AppLayout } from './components/AppLayout';
 import { TodayView } from './components/TodayView';
 import { LeaderboardView } from './components/LeaderboardView';
+import { ActivityView } from './components/ActivityView';
 import { HistoryView } from './components/HistoryView';
+import { SettingsView } from './components/SettingsView';
+import { OnboardingFlow } from './components/OnboardingFlow';
 import { LogWeighInModal } from './components/LogWeighInModal';
 import { DisciplineModal } from './components/DisciplineModal';
-import { EditBetModal } from './components/EditBetModal';
-import { OnboardingModal } from './components/OnboardingModal';
 import { CreateBetModal } from './components/CreateBetModal';
 import { ShareBetModal } from './components/ShareBetModal';
 import { JoinBetModal } from './components/JoinBetModal';
+import { EditBetModal } from './components/EditBetModal';
+import { Check } from 'lucide-react';
 
 export function App() {
-  // Theme state
+  // Theme state: defaults to light to showcase the warm minimal aesthetic from sample
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     const saved = localStorage.getItem('betfit_theme');
     if (saved === 'dark' || saved === 'light') return saved;
-    return 'dark';
+    return 'light';
   });
 
   useEffect(() => {
@@ -41,6 +50,12 @@ export function App() {
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
+
+  // Onboarding state
+  const [isOnboarded, setIsOnboarded] = useState<boolean>(() => {
+    const saved = localStorage.getItem('betfit_onboarded');
+    return saved ? saved === 'true' : true; // Default to true so existing users see dashboard, but can launch onboarding anytime
+  });
 
   // LocalStorage-backed state
   const [users, setUsers] = useState<UserProfile[]>(() => {
@@ -72,27 +87,32 @@ export function App() {
     return saved ? JSON.parse(saved) : INITIAL_BANTER;
   });
 
-  const [currentTab, setCurrentTab] = useState<string>('today');
+  const [activePage, setActivePage] = useState<string>('Today');
+  const [toast, setToast] = useState<string>('');
 
   // Modals
   const [isWeighInOpen, setIsWeighInOpen] = useState(false);
   const [isDisciplineOpen, setIsDisciplineOpen] = useState(false);
-  const [isBetOpen, setIsBetOpen] = useState(false);
-  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isCreateBetOpen, setIsCreateBetOpen] = useState(false);
   const [isShareBetOpen, setIsShareBetOpen] = useState(false);
-  
-  // Shared Invite Handling
-  const [incomingBet, setIncomingBet] = useState<BetGroup | null>(null);
+  const [isEditBetOpen, setIsEditBetOpen] = useState(false);
   const [isJoinBetOpen, setIsJoinBetOpen] = useState(false);
+  const [incomingBet, setIncomingBet] = useState<BetGroup | null>(null);
 
-  // Check URL query param for shared bet link on mount
+  // Auto-dismiss toast
+  useEffect(() => {
+    if (!toast) return;
+    const t = window.setTimeout(() => setToast(''), 2600);
+    return () => window.clearTimeout(t);
+  }, [toast]);
+
+  // URL Invite Link detection
   useEffect(() => {
     try {
       const params = new URLSearchParams(window.location.search);
       const encodedBet = params.get('bet');
       if (encodedBet) {
-        const decoded = JSON.parse(atob(decodeURIComponent(encodedBet)));
+        const decoded = JSON.parse(decodeURIComponent(escape(atob(encodedBet))));
         if (decoded && decoded.title) {
           setIncomingBet(decoded as BetGroup);
           setIsJoinBetOpen(true);
@@ -103,7 +123,7 @@ export function App() {
     }
   }, []);
 
-  // Sync to localStorage
+  // Sync state to localStorage
   useEffect(() => {
     localStorage.setItem('betfit_users', JSON.stringify(users));
   }, [users]);
@@ -125,26 +145,27 @@ export function App() {
   }, [activitiesMap]);
 
   useEffect(() => {
-    localStorage.setItem('betfit_banter', JSON.stringify(banterList));
-  }, [banterList]);
+    localStorage.setItem('betfit_onboarded', String(isOnboarded));
+  }, [isOnboarded]);
 
   const currentUser = users.find((u) => u.id === currentUserId) || users[0];
   const userWeighIns = weighInsMap[currentUser?.id] || [];
 
-  const userActivities = activitiesMap[currentUser?.id] || (currentUser?.chosenDisciplines || []).map((d, i) => ({
-    id: `act-${currentUser?.id}-${d}-${i}`,
-    userId: currentUser?.id,
-    discipline: d,
-    date: '2026-11-03',
-    completed: false,
-    xpEarned: 0
-  }));
+  const userActivities =
+    activitiesMap[currentUser?.id] ||
+    (currentUser?.chosenDisciplines || []).map((d, i) => ({
+      id: `act-${currentUser?.id}-${d}-${i}`,
+      userId: currentUser?.id,
+      discipline: d,
+      date: '2026-11-03',
+      completed: false,
+      xpEarned: 0
+    }));
 
-  // Toggle habit completion with PROPER daily streak tracking bug fix
+  // Toggle habit with verified streak logic
   const handleToggleActivity = (activityId: string, completed: boolean) => {
     const todayDate = '2026-11-03';
 
-    // 1. Update activities list
     const updatedActivities = userActivities.map((act) => {
       if (act.id === activityId) {
         return { ...act, completed };
@@ -157,13 +178,12 @@ export function App() {
       [currentUser.id]: updatedActivities
     }));
 
-    // 2. Check day completion boundary (ALL chosen habits for today must be completed)
+    // Day completion boundary check
     const wasDayFullyCompleted =
       userActivities.length > 0 && userActivities.every((a) => a.completed);
     const isDayNowFullyCompleted =
       updatedActivities.length > 0 && updatedActivities.every((a) => a.completed);
 
-    // 3. Update streak strictly when transitioning between full day completion
     setUsers((prev) =>
       prev.map((u) => {
         if (u.id === currentUser.id) {
@@ -171,13 +191,13 @@ export function App() {
           let newLastCompletedDate = u.lastCompletedDate;
 
           if (isDayNowFullyCompleted && !wasDayFullyCompleted) {
-            // All habits for today completed!
+            // All habits completed!
             if (u.lastCompletedDate !== todayDate) {
               newStreak = u.streakCount + 1;
               newLastCompletedDate = todayDate;
             }
           } else if (!isDayNowFullyCompleted && wasDayFullyCompleted) {
-            // A habit was unchecked, today is incomplete
+            // A habit was unchecked
             if (u.lastCompletedDate === todayDate) {
               newStreak = Math.max(0, u.streakCount - 1);
               newLastCompletedDate = undefined;
@@ -222,287 +242,302 @@ export function App() {
         return u;
       })
     );
+
+    setToast(`Weight check-in saved: ${newWeight} ${currentUser.weightUnit}`);
   };
 
-  // Save updated habits/disciplines
-  const handleSaveDisciplines = (newDisciplines: DisciplineType[]) => {
+  // Update chosen disciplines
+  const handleUpdateDisciplines = (disciplines: DisciplineType[]) => {
     setUsers((prev) =>
       prev.map((u) => {
         if (u.id === currentUser.id) {
-          return { ...u, chosenDisciplines: newDisciplines };
+          return { ...u, chosenDisciplines: disciplines };
         }
         return u;
       })
     );
 
-    const newActs: ActivityLog[] = newDisciplines.map((d, i) => {
+    const newActivities: ActivityLog[] = disciplines.map((d, i) => {
       const existing = userActivities.find((a) => a.discipline === d);
-      return existing || {
-        id: `act-${currentUser.id}-${d}-${i}`,
-        userId: currentUser.id,
-        discipline: d,
-        date: '2026-11-03',
-        completed: false,
-        xpEarned: 0
-      };
+      return (
+        existing || {
+          id: `act-${currentUser.id}-${d}-${i}`,
+          userId: currentUser.id,
+          discipline: d,
+          date: '2026-11-03',
+          completed: false,
+          xpEarned: 0
+        }
+      );
     });
 
     setActivitiesMap((prev) => ({
       ...prev,
-      [currentUser.id]: newActs
+      [currentUser.id]: newActivities
     }));
+
+    setToast('Habits updated.');
   };
 
-  // Post banter message
-  const handleSendBanter = (toUserId: string, text: string, type: 'nudge' | 'cheer' | 'taunt') => {
-    const target = users.find((u) => u.id === toUserId);
-    if (!target) return;
+  // Finish Onboarding Flow
+  const handleFinishOnboarding = (profile: UserProfile, newBetGroup?: BetGroup) => {
+    setUsers((prev) => [profile, ...prev.filter((u) => u.id !== profile.id)]);
+    setCurrentUserId(profile.id);
 
-    const newBanter: BanterItem = {
-      id: `b-${Date.now()}`,
-      fromName: currentUser.name,
-      fromInitials: currentUser.avatarInitials || currentUser.name.slice(0, 2),
-      fromColor: currentUser.avatarColor || 'emerald',
-      toName: target.name,
-      type,
-      text,
-      timeAgo: 'Just now'
-    };
-
-    setBanterList((prev) => [newBanter, ...prev]);
-  };
-
-  // 1. Create a Completely Clean Slate Bet
-  const handleCreateNewBet = (newBet: BetGroup, creatorProfile: UserProfile) => {
-    setBetGroup(newBet);
-    setUsers([creatorProfile]); // Clean slate: creator is sole participant!
-    setCurrentUserId(creatorProfile.id);
-
-    // Initial baseline weigh in
-    const initialWeighIn: WeighIn = {
-      id: `w-${Date.now()}`,
-      userId: creatorProfile.id,
-      date: '2026-11-03',
-      weight: creatorProfile.startingWeight,
-      notes: 'Bet kickoff baseline weigh-in'
-    };
-    setWeighInsMap({ [creatorProfile.id]: [initialWeighIn] });
-
-    // Initial fresh blank activities
-    const initialActivities: ActivityLog[] = creatorProfile.chosenDisciplines.map((d, i) => ({
-      id: `act-${creatorProfile.id}-${d}-${i}`,
-      userId: creatorProfile.id,
+    const initialHabits: ActivityLog[] = profile.chosenDisciplines.map((d, i) => ({
+      id: `act-${profile.id}-${d}-${i}`,
+      userId: profile.id,
       discipline: d,
       date: '2026-11-03',
       completed: false,
       xpEarned: 0
     }));
-    setActivitiesMap({ [creatorProfile.id]: initialActivities });
 
-    setBanterList([
-      {
-        id: `b-${Date.now()}`,
-        fromName: 'Bet System',
-        fromInitials: 'BS',
-        fromColor: 'zinc',
-        toName: creatorProfile.name,
-        type: 'cheer',
-        text: `Bet "${newBet.title}" created with ₹${newBet.potAmount} stake. Share link to invite friends.`,
-        timeAgo: 'Just now'
-      }
-    ]);
-
-    setCurrentTab('today');
-    setTimeout(() => setIsShareBetOpen(true), 250);
-  };
-
-  // 2. Accept shared link and join bet
-  const handleJoinSharedBet = (joinedProfile: UserProfile, bet: BetGroup) => {
-    setBetGroup(bet);
-
-    setUsers((prev) => {
-      const exists = prev.some((u) => u.id === joinedProfile.id);
-      return exists ? prev : [joinedProfile, ...prev];
-    });
-    setCurrentUserId(joinedProfile.id);
+    setActivitiesMap((prev) => ({
+      ...prev,
+      [profile.id]: initialHabits
+    }));
 
     const initialWeighIn: WeighIn = {
       id: `w-${Date.now()}`,
-      userId: joinedProfile.id,
+      userId: profile.id,
       date: '2026-11-03',
-      weight: joinedProfile.startingWeight,
-      notes: 'Joined bet baseline weigh-in'
+      weight: profile.startingWeight,
+      notes: 'Baseline check-in from onboarding'
     };
+
     setWeighInsMap((prev) => ({
       ...prev,
-      [joinedProfile.id]: [initialWeighIn]
+      [profile.id]: [initialWeighIn]
     }));
 
-    const freshActs: ActivityLog[] = joinedProfile.chosenDisciplines.map((d, i) => ({
-      id: `act-${joinedProfile.id}-${d}-${i}`,
-      userId: joinedProfile.id,
-      discipline: d,
-      date: '2026-11-03',
-      completed: false,
-      xpEarned: 0
-    }));
-    setActivitiesMap((prev) => ({
-      ...prev,
-      [joinedProfile.id]: freshActs
-    }));
-
-    if (window.history.replaceState) {
-      window.history.replaceState({}, document.title, window.location.pathname);
+    if (newBetGroup) {
+      setBetGroup(newBetGroup);
     }
 
-    setCurrentTab('today');
+    setIsOnboarded(true);
+    setActivePage('Today');
+    setToast(`Welcome to BetFit Arena, ${profile.name.split(' ')[0]}!`);
   };
 
-  // Complete standard user onboarding
-  const handleCompleteOnboarding = (newProfile: UserProfile) => {
-    setUsers((prev) => [newProfile, ...prev]);
-    setCurrentUserId(newProfile.id);
+  // Join shared bet from link
+  const handleJoinBet = (profile: UserProfile) => {
+    setUsers((prev) => [...prev, profile]);
+    setCurrentUserId(profile.id);
 
-    const initialWeighIn: WeighIn = {
-      id: `w-${Date.now()}`,
-      userId: newProfile.id,
-      date: '2026-11-03',
-      weight: newProfile.startingWeight,
-      notes: 'Kickoff baseline weigh-in'
-    };
-    setWeighInsMap((prev) => ({
-      ...prev,
-      [newProfile.id]: [initialWeighIn]
-    }));
-
-    const freshActivities: ActivityLog[] = newProfile.chosenDisciplines.map((d, i) => ({
-      id: `act-${newProfile.id}-${d}-${i}`,
-      userId: newProfile.id,
+    const initialHabits: ActivityLog[] = profile.chosenDisciplines.map((d, i) => ({
+      id: `act-${profile.id}-${d}-${i}`,
+      userId: profile.id,
       discipline: d,
       date: '2026-11-03',
       completed: false,
       xpEarned: 0
     }));
+
     setActivitiesMap((prev) => ({
       ...prev,
-      [newProfile.id]: freshActivities
+      [profile.id]: initialHabits
     }));
 
-    setCurrentTab('today');
+    const initialWeighIn: WeighIn = {
+      id: `w-${Date.now()}`,
+      userId: profile.id,
+      date: '2026-11-03',
+      weight: profile.startingWeight,
+      notes: 'Baseline check-in'
+    };
+
+    setWeighInsMap((prev) => ({
+      ...prev,
+      [profile.id]: [initialWeighIn]
+    }));
+
+    // Remove query param from URL without reload
+    window.history.replaceState({}, document.title, window.location.pathname);
+    setToast(`Joined ${betGroup.title}!`);
   };
 
+  // Export Data JSON
+  const handleExportData = () => {
+    const backup = {
+      betGroup,
+      users,
+      weighInsMap,
+      activitiesMap
+    };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], {
+      type: 'application/json'
+    });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `betfit-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    setToast('Backup exported.');
+  };
+
+  // Reset Application Data
+  const handleResetData = () => {
+    if (
+      window.confirm(
+        'This will reset your local data and restore the initial participants and December showdown. Continue?'
+      )
+    ) {
+      localStorage.removeItem('betfit_users');
+      localStorage.removeItem('betfit_active_user');
+      localStorage.removeItem('betfit_bet_group');
+      localStorage.removeItem('betfit_weigh_ins');
+      localStorage.removeItem('betfit_activities');
+      localStorage.removeItem('betfit_onboarded');
+      window.location.reload();
+    }
+  };
+
+  // If user is currently in Onboarding Flow (e.g. freshly unboarded or triggered manually)
+  if (!isOnboarded) {
+    return (
+      <OnboardingFlow
+        onFinish={handleFinishOnboarding}
+        onCancel={() => setIsOnboarded(true)}
+        existingBet={betGroup}
+      />
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-[var(--bg-primary)] text-[var(--text-primary)] flex flex-col font-sans antialiased selection:bg-emerald-500 selection:text-black transition-colors duration-200">
-      {/* Top Header */}
-      <Header
-        users={users}
-        currentUser={currentUser}
-        theme={theme}
-        onToggleTheme={toggleTheme}
-        onSelectUser={(u) => setCurrentUserId(u.id)}
-        onOpenWeighInModal={() => setIsWeighInOpen(true)}
-        onOpenOnboarding={() => setIsOnboardingOpen(true)}
-      />
+    <AppLayout
+      currentUser={currentUser}
+      activePage={activePage}
+      onSelectPage={setActivePage}
+      isDarkMode={theme === 'dark'}
+      onToggleTheme={toggleTheme}
+      onOpenProfile={() => setActivePage('Settings')}
+      onStartOnboarding={() => setIsOnboarded(false)}
+    >
+      {/* Dynamic Tab Views */}
+      {activePage === 'Today' && (
+        <TodayView
+          currentUser={currentUser}
+          allUsers={users}
+          betGroup={betGroup}
+          todayActivities={userActivities}
+          weighIns={userWeighIns}
+          onToggleActivity={handleToggleActivity}
+          onOpenWeighInModal={() => setIsWeighInOpen(true)}
+          onOpenDisciplineModal={() => setIsDisciplineOpen(true)}
+          onOpenShareModal={() => setIsShareBetOpen(true)}
+          onNavigateToTab={setActivePage}
+        />
+      )}
 
-      {/* Main View Container */}
-      <main className="flex-1 w-full px-4 pt-3">
-        {currentTab === 'today' && (
-          <TodayView
-            currentUser={currentUser}
-            allUsers={users}
-            betGroup={betGroup}
-            todayActivities={userActivities}
-            weighIns={userWeighIns}
-            onToggleActivity={handleToggleActivity}
-            onOpenWeighInModal={() => setIsWeighInOpen(true)}
-            onOpenDisciplineModal={() => setIsDisciplineOpen(true)}
-            onOpenShareModal={() => setIsShareBetOpen(true)}
-            onNavigateToTab={(tab) => setCurrentTab(tab)}
-          />
-        )}
+      {activePage === 'The Bet' && (
+        <LeaderboardView
+          currentUser={currentUser}
+          allUsers={users}
+          betGroup={betGroup}
+          banterList={banterList}
+          onOpenShareModal={() => setIsShareBetOpen(true)}
+          onOpenCreateBetModal={() => setIsCreateBetOpen(true)}
+          onOpenEditBetModal={() => setIsEditBetOpen(true)}
+          onSendBanter={(toUser, type) => {
+            setToast(`Sent ${type} to ${toUser.name}`);
+          }}
+        />
+      )}
 
-        {currentTab === 'bet' && (
-          <LeaderboardView
-            users={users}
-            currentUser={currentUser}
-            betGroup={betGroup}
-            banterList={banterList}
-            onSendBanter={handleSendBanter}
-            onOpenBetModal={() => setIsBetOpen(true)}
-            onOpenShareModal={() => setIsShareBetOpen(true)}
-            onOpenCreateBetModal={() => setIsCreateBetOpen(true)}
-          />
-        )}
+      {activePage === 'Activity' && (
+        <ActivityView
+          currentUser={currentUser}
+          todayActivities={userActivities}
+          activityHistory={userActivities.filter((a) => a.completed)}
+          onToggleActivity={handleToggleActivity}
+          onOpenDisciplineModal={() => setIsDisciplineOpen(true)}
+          onOpenLogModal={() => setIsDisciplineOpen(true)}
+        />
+      )}
 
-        {currentTab === 'history' && (
-          <HistoryView
-            currentUser={currentUser}
-            weighIns={userWeighIns}
-            betGroup={betGroup}
-            onOpenWeighInModal={() => setIsWeighInOpen(true)}
-          />
-        )}
-      </main>
+      {activePage === 'Progress' && (
+        <HistoryView
+          currentUser={currentUser}
+          weighIns={userWeighIns}
+          onOpenWeighInModal={() => setIsWeighInOpen(true)}
+        />
+      )}
 
-      {/* 3-Tab Bottom Navigation */}
-      <Navigation
-        currentTab={currentTab}
-        onSelectTab={(tab) => setCurrentTab(tab)}
-      />
+      {activePage === 'Settings' && (
+        <SettingsView
+          currentUser={currentUser}
+          allUsers={users}
+          betGroup={betGroup}
+          onSwitchUser={(id) => {
+            setCurrentUserId(id);
+            setToast('Switched participant.');
+          }}
+          onStartOnboarding={() => setIsOnboarded(false)}
+          onExportData={handleExportData}
+          onResetData={handleResetData}
+        />
+      )}
 
       {/* Modals */}
       <LogWeighInModal
+        currentUser={currentUser}
         isOpen={isWeighInOpen}
         onClose={() => setIsWeighInOpen(false)}
-        currentUser={currentUser}
-        onSaveWeight={handleSaveWeight}
+        onSave={handleSaveWeight}
       />
 
       <DisciplineModal
         isOpen={isDisciplineOpen}
         onClose={() => setIsDisciplineOpen(false)}
-        selectedDisciplines={currentUser?.chosenDisciplines || []}
-        onSaveDisciplines={handleSaveDisciplines}
+        currentDisciplines={currentUser.chosenDisciplines}
+        onSave={handleUpdateDisciplines}
       />
 
-      <EditBetModal
-        isOpen={isBetOpen}
-        onClose={() => setIsBetOpen(false)}
-        betGroup={betGroup}
-        onSaveBet={(updated) => setBetGroup(updated)}
-      />
-
-      <OnboardingModal
-        isOpen={isOnboardingOpen}
-        onClose={() => setIsOnboardingOpen(false)}
-        onCompleteOnboarding={handleCompleteOnboarding}
-      />
-
-      {/* Clean Slate Bet Creation Modal */}
       <CreateBetModal
         isOpen={isCreateBetOpen}
         onClose={() => setIsCreateBetOpen(false)}
-        onCreateNewBet={handleCreateNewBet}
+        currentUserName={currentUser.name}
+        onCreateBet={(bet) => {
+          setBetGroup(bet);
+          setToast(`Created new bet: ${bet.title}`);
+        }}
       />
 
-      {/* Share Bet Link Modal */}
       <ShareBetModal
         isOpen={isShareBetOpen}
         onClose={() => setIsShareBetOpen(false)}
         betGroup={betGroup}
       />
 
-      {/* Join Bet Link Invite Modal */}
+      <EditBetModal
+        isOpen={isEditBetOpen}
+        onClose={() => setIsEditBetOpen(false)}
+        betGroup={betGroup}
+        onSave={(updated) => {
+          setBetGroup(updated);
+          setToast('Wager updated.');
+        }}
+      />
+
       {incomingBet && (
         <JoinBetModal
           isOpen={isJoinBetOpen}
           onClose={() => setIsJoinBetOpen(false)}
-          sharedBet={incomingBet}
-          onJoinBet={handleJoinSharedBet}
+          betData={incomingBet}
+          onJoinBet={handleJoinBet}
         />
       )}
-    </div>
+
+      {/* Minimal Toast Feedback */}
+      {toast && (
+        <div className="toast">
+          <Check size={15} className="text-[var(--green)]" />
+          <span>{toast}</span>
+        </div>
+      )}
+    </AppLayout>
   );
 }
-
 export default App;
