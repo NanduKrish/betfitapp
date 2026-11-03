@@ -161,7 +161,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                       {user.goalType === 'gain' ? 'BULK' : 'CUT'}
                     </span>
                     {isMe && (
-                      <span className="text-[9px] font-bold text-[var(--green)] bg-[var(--surface)] px-1.5 py-0.2 rounded border border-[var(--line)]">
+                      <span className="text-xs font-semibold text-[var(--green)] bg-[var(--surface)] px-1.5 py-0.5 rounded border border-[var(--line)]">
                         YOU
                       </span>
                     )}
@@ -174,12 +174,12 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
 
                 <h3 className="truncate">{user.name}</h3>
 
-                <p className="flex items-center gap-1.5 text-[11px] flex-wrap">
+                <p className="flex items-center gap-1.5 text-xs text-[var(--muted)] flex-wrap">
                   <span>
-                    Current: <strong>{user.currentWeight}kg</strong>
+                    Current: <strong className="text-[var(--text)]">{user.currentWeight}kg</strong>
                   </span>
                   <span>·</span>
-                  <span>Target: <strong>{user.targetWeight}kg</strong></span>
+                  <span>Target: <strong className="text-[var(--text)]">{user.targetWeight}kg</strong></span>
                   <span>·</span>
                   <span className="font-semibold text-[var(--green)]">
                     {delta.label}
@@ -196,7 +196,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                   />
                 </div>
 
-                <div className="flex items-center justify-between text-[10px] text-[var(--muted)] mt-2 font-mono-num">
+                <div className="flex items-center justify-between text-xs text-[var(--muted)] mt-2 font-mono-num">
                   <span>
                     {progress}% goal completed
                   </span>

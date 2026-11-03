@@ -3,7 +3,7 @@
 
 :root {
   font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
-  color: #273027;
+  color: #242924;
   background-color: #f7f8f5;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -11,38 +11,38 @@
 
   --bg: #f7f8f5;
   --surface: #ffffff;
-  --surface-subtle: #f4f6f1;
-  --text: #273027;
-  --muted: #788174;
-  --line: #e7ebe4;
-  --green: #6f895f;
-  --green-dark: #58734b;
-  --green-pale: #eef3e9;
-  --amber: #b87a28;
-  --amber-pale: #fcf6eb;
-  --danger: #ad665b;
-  --danger-pale: #fdf2f0;
+  --surface-subtle: #f2f5ef;
+  --text: #242924;
+  --muted: #6e786b;
+  --line: #e3e8de;
+  --green: #4f6b43;
+  --green-dark: #3f5735;
+  --green-pale: #edf3e8;
+  --amber: #a86c1f;
+  --amber-pale: #fbf5e8;
+  --danger: #b35346;
+  --danger-pale: #faedea;
   --radius: 12px;
 }
 
-/* SLEEK OBSIDIAN BLACK DARK THEME WITH ACCENT TINTS OF GREEN */
+/* SLEEK OBSIDIAN BLACK DARK THEME WITH REFINED EMERALD TINTS */
 .dark {
-  color: #f2f5f1;
+  color: #f0f3ed;
   background-color: #080908;
 
   --bg: #080908;
-  --surface: #111311;
-  --surface-subtle: #181b18;
-  --text: #f2f5f1;
-  --muted: #7f897d;
-  --line: #1f241f;
-  --green: #3cd070;
-  --green-dark: #28a755;
-  --green-pale: rgba(60, 208, 112, 0.12);
+  --surface: #121412;
+  --surface-subtle: #191c19;
+  --text: #f0f3ed;
+  --muted: #828c80;
+  --line: #222722;
+  --green: #34d399;
+  --green-dark: #22c55e;
+  --green-pale: rgba(52, 211, 153, 0.10);
   --amber: #fbbf24;
-  --amber-pale: rgba(251, 191, 36, 0.12);
+  --amber-pale: rgba(251, 191, 36, 0.10);
   --danger: #f87171;
-  --danger-pale: rgba(248, 113, 113, 0.12);
+  --danger-pale: rgba(248, 113, 113, 0.10);
 }
 
 * {
@@ -54,6 +54,8 @@ body {
   min-width: 320px;
   background: var(--bg);
   color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
@@ -81,7 +83,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   display: flex;
   align-items: center;
   gap: 8px;
-  font: 800 14px 'Manrope', sans-serif;
+  font: 800 15px 'Manrope', sans-serif;
   letter-spacing: 2px;
   color: var(--text);
 }
@@ -121,7 +123,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   display: flex;
   align-items: center;
   gap: 10px;
-  padding: 10px;
+  padding: 10px 12px;
   background: var(--surface-subtle);
   border: 1px solid var(--line);
   border-radius: 10px;
@@ -146,7 +148,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .profile-switch b {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--text);
   overflow: hidden;
@@ -155,7 +157,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .profile-switch small {
-  font-size: 9px;
+  font-size: 11px;
   color: var(--muted);
   margin-top: 2px;
 }
@@ -173,7 +175,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   border: 1px solid var(--line);
   display: grid;
   place-items: center;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   font-family: 'Manrope', sans-serif;
   flex-shrink: 0;
@@ -186,13 +188,13 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .avatar.small {
   width: 28px;
   height: 28px;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .nav-caption {
-  font-size: 9px;
+  font-size: 11px;
   color: var(--muted);
-  letter-spacing: 1.3px;
+  letter-spacing: 1.2px;
   font-weight: 700;
   padding: 0 12px 10px;
 }
@@ -207,7 +209,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   padding: 0 12px;
   border-radius: 8px;
   color: var(--muted);
-  font-size: 12px;
+  font-size: 13px;
   text-align: left;
   margin: 2px 0;
   font-weight: 500;
@@ -226,12 +228,8 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 
 .side-link.active {
   background: var(--green-pale);
-  color: var(--green-dark);
-  font-weight: 700;
-}
-
-.dark .side-link.active {
   color: var(--green);
+  font-weight: 700;
 }
 
 .side-link.active svg {
@@ -253,7 +251,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   background: var(--surface-subtle);
   border: 1px solid var(--line);
   border-radius: 8px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   transition: border-color 0.15s ease;
 }
@@ -268,7 +266,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   gap: 8px;
   padding: 10px 8px 0;
   border-top: 1px solid var(--line);
-  font-size: 9px;
+  font-size: 11px;
   line-height: 1.4;
   color: var(--muted);
 }
@@ -311,9 +309,9 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
-  letter-spacing: .3px;
+  letter-spacing: .2px;
 }
 
 .crumb b {
@@ -333,7 +331,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   gap: 9px;
   background: none;
   border: 0;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   color: var(--text);
   padding: 4px 8px;
@@ -353,13 +351,13 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .content {
-  max-width: 980px;
+  max-width: 960px;
   width: 100%;
   margin: 0 auto;
   padding: 28px 28px 80px;
 }
 
-/* RESPONSIVE, UNCLUTTERED PAGE HEAD */
+/* UNIFIED PAGE HEADER */
 .page-head {
   display: flex;
   flex-direction: column;
@@ -370,7 +368,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 @media (min-width: 640px) {
   .page-head {
     flex-direction: row;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: 20px;
   }
@@ -382,28 +380,28 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .eyebrow {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
-  letter-spacing: 1.25px;
+  letter-spacing: 0.08em;
   color: var(--muted);
   text-transform: uppercase;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .page-head h1 {
-  font: 700 clamp(22px, 3.2vw, 30px) 'Manrope', sans-serif;
-  letter-spacing: -0.8px;
+  font: 700 clamp(24px, 3.2vw, 30px) 'Manrope', sans-serif;
+  letter-spacing: -0.025em;
   margin: 0;
   color: var(--text);
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 .page-head p {
-  font-size: 12px;
+  font-size: 13px;
   color: var(--muted);
   margin: 6px 0 0;
   line-height: 1.5;
-  max-width: 560px;
+  max-width: 580px;
 }
 
 .page-head-actions {
@@ -414,36 +412,42 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   flex-wrap: wrap;
 }
 
-/* BUTTONS */
+/* PRODUCTION-GRADE BUTTONS */
 .btn-primary, .btn-secondary, .btn-quiet {
   height: 38px;
-  padding: 0 14px;
-  border-radius: 8px;
+  padding: 0 15px;
+  border-radius: 9px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  font-size: 11px;
-  font-weight: 700;
+  gap: 7px;
+  font-size: 13px;
+  font-weight: 600;
   white-space: nowrap;
   transition: all 0.15s ease;
+  user-select: none;
 }
 
 .btn-primary {
   border: 1px solid var(--green);
   background: var(--green);
-  color: #fff;
-}
-
-.dark .btn-primary {
-  background: var(--green);
-  color: #080908;
-  border-color: var(--green);
-  font-weight: 800;
+  color: #ffffff;
 }
 
 .btn-primary:hover {
   background: var(--green-dark);
+}
+
+.dark .btn-primary {
+  background: #173822;
+  border-color: #2b613b;
+  color: #4ade80;
+}
+
+.dark .btn-primary:hover {
+  background: #1e492c;
+  border-color: #387c4c;
+  color: #6ee7b7;
 }
 
 .btn-secondary {
@@ -467,7 +471,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   color: var(--text);
 }
 
-/* SECTION TITLE */
+/* SECTION TITLES */
 .section-title {
   display: flex;
   align-items: center;
@@ -476,14 +480,14 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .section-title h2 {
-  font: 700 15px 'Manrope', sans-serif;
-  letter-spacing: -0.3px;
+  font: 700 17px 'Manrope', sans-serif;
+  letter-spacing: -0.02em;
   margin: 0;
   color: var(--text);
 }
 
 .section-title > span {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
 }
 
@@ -491,14 +495,14 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .overview-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 13px;
+  gap: 14px;
 }
 
 .info-card {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 16px 16px 14px;
+  padding: 18px 18px 16px;
   min-height: 140px;
   display: flex;
   flex-direction: column;
@@ -514,10 +518,10 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   justify-content: space-between;
   align-items: center;
   color: var(--muted);
-  font-size: 10px;
-  font-weight: 600;
+  font-size: 11px;
+  font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.06em;
 }
 
 .info-top svg {
@@ -526,27 +530,27 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 
 .info-card strong {
   font: 700 24px 'Manrope', sans-serif;
-  letter-spacing: -.7px;
+  letter-spacing: -0.025em;
   margin-top: 10px;
   color: var(--text);
 }
 
 .info-card strong small {
-  font: 500 11px 'DM Sans', sans-serif;
+  font: 500 13px 'DM Sans', sans-serif;
   color: var(--muted);
   margin-left: 3px;
 }
 
 .info-card strong.goal-name {
   font-size: 16px;
-  line-height: 1.3;
+  line-height: 1.35;
   overflow-wrap: anywhere;
 }
 
 .info-card p {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
-  margin: 4px 0 12px;
+  margin: 6px 0 12px;
   line-height: 1.4;
 }
 
@@ -557,8 +561,8 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   background: none;
   border: 0;
   color: var(--green);
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
   padding: 0;
   margin-top: auto;
   align-self: flex-start;
@@ -570,7 +574,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   opacity: 0.8;
 }
 
-/* LIST CARD & ITEMS */
+/* LIST CARDS */
 .list-card {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -582,7 +586,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 12px 0;
+  padding: 14px 0;
   border-bottom: 1px solid var(--line);
 }
 
@@ -591,18 +595,14 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .activity-icon {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   display: grid;
   place-items: center;
-  border-radius: 9px;
+  border-radius: 10px;
   background: var(--surface-subtle);
-  color: var(--green-dark);
-  flex-shrink: 0;
-}
-
-.dark .activity-icon {
   color: var(--green);
+  flex-shrink: 0;
 }
 
 .activity-detail {
@@ -615,24 +615,24 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .activity-detail b {
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 600;
   color: var(--text);
 }
 
 .activity-detail small {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
   margin-top: 2px;
 }
 
 .activity-date {
-  font-size: 9px;
+  font-size: 12px;
   color: var(--muted);
   white-space: nowrap;
 }
 
-/* EMPTY CARD */
+/* EMPTY CARDS */
 .empty-card {
   background: var(--surface);
   border: 1px dashed var(--line);
@@ -662,14 +662,14 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .empty-card > b {
-  font: 700 13px 'Manrope', sans-serif;
+  font: 700 15px 'Manrope', sans-serif;
   color: var(--text);
 }
 
 .empty-card p {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
-  max-width: 340px;
+  max-width: 360px;
   line-height: 1.5;
   margin: 6px 0 16px;
 }
@@ -677,17 +677,17 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 /* GOALS & LEADERBOARD CARDS */
 .goal-list {
   display: grid;
-  gap: 10px;
+  gap: 12px;
 }
 
 .goal-card {
   display: flex;
-  gap: 12px;
+  gap: 14px;
   align-items: flex-start;
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 16px;
+  padding: 16px 18px;
   transition: border-color 0.15s ease;
 }
 
@@ -696,8 +696,8 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .goal-card-icon {
-  width: 36px;
-  height: 36px;
+  width: 38px;
+  height: 38px;
   display: grid;
   place-items: center;
   background: var(--surface-subtle);
@@ -712,45 +712,42 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .goal-meta {
-  font-size: 9px;
+  font-size: 11px;
   color: var(--muted);
   font-weight: 700;
-  letter-spacing: 0.8px;
+  letter-spacing: 0.06em;
 }
 
 .goal-main h3 {
-  font: 700 15px 'Manrope', sans-serif;
+  font: 700 16px 'Manrope', sans-serif;
+  letter-spacing: -0.015em;
   margin: 4px 0 3px;
   color: var(--text);
 }
 
 .goal-main p {
-  font-size: 11px;
+  font-size: 12px;
   color: var(--muted);
   margin: 0;
 }
 
 .active-pill {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
-  color: var(--green-dark);
+  color: var(--green);
   background: var(--green-pale);
   border: 1px solid var(--line);
-  padding: 3px 8px;
+  padding: 3px 9px;
   border-radius: 12px;
 }
 
-.dark .active-pill {
-  color: var(--green);
-}
-
 .danger-pill {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--danger);
   background: var(--danger-pale);
   border: 1px solid var(--line);
-  padding: 3px 8px;
+  padding: 3px 9px;
   border-radius: 12px;
 }
 
@@ -772,7 +769,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .progress-summary > div {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 11px;
+  border-radius: 12px;
   padding: 14px 16px;
 }
 
@@ -781,14 +778,15 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .progress-summary span {
-  font-size: 9px;
-  letter-spacing: 0.8px;
+  font-size: 11px;
+  letter-spacing: 0.05em;
   color: var(--muted);
   font-weight: 700;
 }
 
 .progress-summary b {
   font: 700 18px 'Manrope', sans-serif;
+  letter-spacing: -0.02em;
   margin-top: 6px;
   color: var(--text);
 }
@@ -798,7 +796,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .list-heading {
-  font: 700 12px 'Manrope', sans-serif;
+  font: 700 14px 'Manrope', sans-serif;
   padding: 14px 0;
   border-bottom: 1px solid var(--line);
   color: var(--text);
@@ -808,7 +806,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 12px 0;
+  padding: 13px 0;
   border-bottom: 1px solid var(--line);
 }
 
@@ -821,18 +819,18 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .weight-row b {
-  font: 700 13px 'Manrope', sans-serif;
+  font: 700 14px 'Manrope', sans-serif;
   color: var(--text);
 }
 
 .weight-row small {
-  font-size: 9px;
+  font-size: 12px;
   color: var(--muted);
   margin-top: 2px;
 }
 
 .change-note {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--green);
 }
@@ -843,38 +841,35 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   align-items: center;
   justify-content: space-between;
   gap: 15px;
-  padding: 16px;
+  padding: 16px 18px;
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 11px;
-  margin-bottom: 11px;
+  border-radius: 12px;
+  margin-bottom: 12px;
 }
 
 .settings-card b {
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 600;
   color: var(--text);
 }
 
 .settings-card p {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
   margin: 4px 0 0;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .storage-badge {
-  font-size: 8px;
-  letter-spacing: 1px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
   font-weight: 700;
-  color: var(--green-dark);
+  color: var(--green);
   background: var(--green-pale);
   border: 1px solid var(--line);
-  border-radius: 5px;
+  border-radius: 6px;
   padding: 4px 8px;
-}
-
-.dark .storage-badge {
-  color: var(--green);
 }
 
 .btn-danger {
@@ -884,10 +879,10 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   background: var(--surface);
   border: 1px solid var(--danger-pale);
   color: var(--danger);
-  border-radius: 7px;
+  border-radius: 8px;
   padding: 8px 12px;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
   transition: all 0.15s ease;
 }
 
@@ -896,7 +891,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .settings-foot {
-  font-size: 9px;
+  font-size: 11px;
   color: var(--muted);
   line-height: 1.6;
   max-width: 530px;
@@ -922,7 +917,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 16px;
-  padding: 22px;
+  padding: 24px;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
@@ -930,30 +925,30 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   display: flex;
   justify-content: space-between;
   gap: 15px;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 
 .modal-head h2 {
-  font: 700 18px 'Manrope', sans-serif;
-  letter-spacing: -0.4px;
+  font: 700 19px 'Manrope', sans-serif;
+  letter-spacing: -0.02em;
   margin: 0;
   color: var(--text);
 }
 
 .modal-head p {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--muted);
   margin: 5px 0 0;
-  line-height: 1.4;
+  line-height: 1.45;
 }
 
 .modal-head > button {
   border: 0;
   background: var(--surface-subtle);
   color: var(--muted);
-  border-radius: 7px;
-  width: 30px;
-  height: 30px;
+  border-radius: 8px;
+  width: 32px;
+  height: 32px;
   display: grid;
   place-items: center;
   flex-shrink: 0;
@@ -965,33 +960,33 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 
 .modal-form {
   display: grid;
-  gap: 14px;
+  gap: 16px;
 }
 
 .field {
   display: grid;
   gap: 6px;
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
   color: var(--text);
 }
 
 .field input, .field select, .form-field input, .form-field select {
   width: 100%;
-  height: 40px;
+  height: 42px;
   padding: 0 12px;
   border: 1px solid var(--line);
   background: var(--surface);
   border-radius: 8px;
   color: var(--text);
-  font-size: 11px;
+  font-size: 13px;
   outline: none;
 }
 
 .two-fields {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 11px;
+  gap: 12px;
 }
 
 .segmented, .unit-switch {
@@ -1010,7 +1005,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   border-radius: 6px;
   padding: 8px 10px;
   color: var(--muted);
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 500;
   transition: all 0.15s ease;
 }
@@ -1019,7 +1014,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   background: var(--surface);
   color: var(--text);
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .activity-choices {
@@ -1038,7 +1033,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   background: var(--surface);
   border-radius: 9px;
   color: var(--text);
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 500;
   text-align: left;
   transition: all 0.15s ease;
@@ -1052,7 +1047,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   border-color: var(--green);
   background: var(--green-pale);
   color: var(--green);
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .activity-choices button span {
@@ -1095,13 +1090,13 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .choice-cards b {
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 700;
 }
 
 .choice-cards small {
-  font-size: 9px;
-  line-height: 1.4;
+  font-size: 12px;
+  line-height: 1.45;
   color: var(--muted);
 }
 
@@ -1111,14 +1106,14 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .modal-hint {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--muted);
-  line-height: 1.4;
+  line-height: 1.45;
   margin: 0;
 }
 
 .error {
-  font-size: 10px;
+  font-size: 12px;
   color: var(--danger);
   margin: 0;
   font-weight: 600;
@@ -1133,12 +1128,12 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   background: var(--surface);
   color: var(--text);
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 9px;
   padding: 10px 16px;
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 11px;
+  font-size: 13px;
   font-weight: 600;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.2);
   white-space: nowrap;
@@ -1163,7 +1158,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .step-count {
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 600;
   color: var(--muted);
 }
@@ -1191,17 +1186,17 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .onboard-kicker {
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 700;
   color: var(--muted);
-  letter-spacing: 1.4px;
-  margin-bottom: 14px;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
   text-transform: uppercase;
 }
 
 .onboard-body h1 {
   font: 800 clamp(26px, 5.5vw, 36px)/1.15 'Manrope', sans-serif;
-  letter-spacing: -1.4px;
+  letter-spacing: -0.03em;
   color: var(--text);
   margin: 0;
 }
@@ -1212,7 +1207,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .intro {
-  font-size: 12px;
+  font-size: 13px;
   line-height: 1.6;
   color: var(--muted);
   margin: 12px 0 24px;
@@ -1222,17 +1217,17 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .form-field {
   display: grid;
   gap: 6px;
-  margin-bottom: 14px;
+  margin-bottom: 16px;
 }
 
 .form-field > label {
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
   color: var(--text);
 }
 
 .helper {
-  font-size: 9px;
+  font-size: 12px;
   color: var(--muted);
   margin-top: 4px;
 }
@@ -1250,8 +1245,8 @@ button:focus-visible, input:focus-visible, select:focus-visible {
   right: 12px;
   top: 13px;
   color: var(--muted);
-  font-size: 10px;
-  font-weight: 700;
+  font-size: 12px;
+  font-weight: 600;
 }
 
 .ready-icon {
@@ -1268,15 +1263,15 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 .summary-card {
   background: var(--surface);
   border: 1px solid var(--line);
-  border-radius: 10px;
-  padding: 4px 16px;
+  border-radius: 12px;
+  padding: 6px 18px;
 }
 
 .summary-card > div {
   display: flex;
   justify-content: space-between;
   gap: 15px;
-  padding: 10px 0;
+  padding: 12px 0;
   border-bottom: 1px solid var(--line);
 }
 
@@ -1285,15 +1280,15 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 }
 
 .summary-card span {
-  font-size: 8px;
-  letter-spacing: .8px;
+  font-size: 11px;
+  letter-spacing: 0.06em;
   color: var(--muted);
   font-weight: 700;
   text-transform: uppercase;
 }
 
 .summary-card b {
-  font-size: 11px;
+  font-size: 13px;
   color: var(--text);
   text-align: right;
   max-width: 60%;
@@ -1314,7 +1309,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
 
 .onboard-foot {
   text-align: center;
-  font-size: 9px;
+  font-size: 11px;
   color: var(--muted);
   margin: 20px 0 0;
 }
@@ -1401,7 +1396,7 @@ button:focus-visible, input:focus-visible, select:focus-visible {
     justify-content: center;
     gap: 3px;
     color: var(--muted);
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 500;
   }
 

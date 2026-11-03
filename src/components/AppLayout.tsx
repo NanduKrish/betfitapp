@@ -122,8 +122,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
 
           <button className="theme-toggle-btn" onClick={onToggleTheme}>
             <span>Theme</span>
-            <div className="flex items-center gap-1.5 font-semibold text-[11px]">
-              {isDarkMode ? <Moon size={13} /> : <Sun size={13} />}
+            <div className="flex items-center gap-1.5 font-semibold text-xs">
+              {isDarkMode ? <Moon size={14} /> : <Sun size={14} />}
               <span>{isDarkMode ? 'Dark' : 'Light'}</span>
             </div>
           </button>

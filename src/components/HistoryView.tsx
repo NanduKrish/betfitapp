@@ -150,7 +150,7 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
               );
             })}
           </svg>
-          <div className="flex justify-between text-[10px] text-[var(--muted)] font-mono-num mt-2 pt-2 border-t border-[var(--line)]">
+          <div className="flex justify-between text-xs text-[var(--muted)] font-mono-num mt-2 pt-2 border-t border-[var(--line)]">
             <span>Started: {chronological[0]?.date}</span>
             <span className="text-[var(--green)] font-semibold">Target: {currentUser.targetWeight} {currentUser.weightUnit}</span>
             <span>Latest: {chronological[chronological.length - 1]?.date}</span>

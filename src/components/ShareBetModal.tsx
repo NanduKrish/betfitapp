@@ -83,7 +83,7 @@ export const ShareBetModal: React.FC<ShareBetModalProps> = ({
               <input
                 readOnly
                 value={shareUrl}
-                className="bg-[var(--surface-subtle)] text-[11px] truncate select-all"
+                className="bg-[var(--surface-subtle)] text-xs truncate select-all"
               />
               <button
                 type="button"

@@ -10,10 +10,10 @@ interface AvatarProps {
 }
 
 const SIZE_MAP = {
-  sm: 'w-7 h-7 text-[10px]',
-  md: 'w-8 h-8 text-xs',
-  lg: 'w-10 h-10 text-sm',
-  xl: 'w-12 h-12 text-base'
+  sm: 'w-7 h-7 text-xs font-semibold',
+  md: 'w-8 h-8 text-xs font-bold',
+  lg: 'w-10 h-10 text-sm font-bold',
+  xl: 'w-12 h-12 text-base font-bold'
 };
 
 export const Avatar: React.FC<AvatarProps> = ({

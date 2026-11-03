@@ -79,16 +79,16 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
                   <div className="flex items-center gap-2">
                     <b className="text-xs sm:text-sm text-[var(--text)]">{u.name}</b>
                     {isCurrent && (
-                      <span className="text-[9px] font-bold text-[var(--green)] bg-[var(--surface)] border border-[var(--line)] px-1.5 py-0.2 rounded">
+                      <span className="text-xs font-semibold text-[var(--green)] bg-[var(--surface)] border border-[var(--line)] px-1.5 py-0.5 rounded">
                         ACTIVE
                       </span>
                     )}
-                    <span className="text-[9px] font-bold text-[var(--muted)] uppercase bg-[var(--surface-subtle)] border border-[var(--line)] px-1.5 py-0.2 rounded">
+                    <span className="text-xs font-semibold text-[var(--muted)] uppercase bg-[var(--surface-subtle)] border border-[var(--line)] px-1.5 py-0.5 rounded">
                       {u.goalType === 'gain' ? 'Bulk' : 'Cut'}
                     </span>
                   </div>
 
-                  <p className="text-[11px] text-[var(--muted)] mt-0.5">
+                  <p className="text-xs text-[var(--muted)] mt-0.5">
                     {u.currentWeight}kg (Target: {u.targetWeight}kg) · Streak: {u.streakCount} days
                   </p>
                 </div>

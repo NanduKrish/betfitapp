@@ -43,7 +43,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         <div className="w-full max-w-md space-y-8">
           {/* Hero Pitch */}
           <div className="text-center space-y-3">
-            <div className="inline-block text-[9px] font-bold tracking-[1.4px] text-[var(--muted)] uppercase bg-[var(--surface-subtle)] px-2.5 py-1 rounded-full border border-[var(--line)]">
+            <div className="inline-block text-xs font-semibold tracking-wider text-[var(--muted)] uppercase bg-[var(--surface-subtle)] px-3 py-1 rounded-full border border-[var(--line)]">
               HEALTH & HABIT SHOWDOWN
             </div>
 
@@ -64,7 +64,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                 <span className="text-xs font-bold text-[var(--text)] uppercase tracking-wider">
                   Select your profile
                 </span>
-                <span className="text-[10px] text-[var(--muted)]">Saved locally</span>
+                <span className="text-xs text-[var(--muted)]">Saved locally</span>
               </div>
 
               <div className="space-y-2">
@@ -77,14 +77,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
                     <div className="flex items-center gap-3">
                       <Avatar initials={u.avatarInitials} colorClass={u.avatarColor} size="md" />
                       <div>
-                        <b className="text-xs text-[var(--text)] block">{u.name}</b>
-                        <small className="text-[10px] text-[var(--muted)]">
+                        <b className="text-xs sm:text-sm text-[var(--text)] block font-semibold">{u.name}</b>
+                        <small className="text-xs text-[var(--muted)]">
                           {u.goalType === 'gain' ? 'Bulk' : 'Cut'} · {u.currentWeight}kg (Target: {u.targetWeight}kg)
                         </small>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1 text-xs font-bold text-[var(--green)] group-hover:translate-x-0.5 transition-transform">
+                    <div className="flex items-center gap-1 text-xs font-semibold text-[var(--green)] group-hover:translate-x-0.5 transition-transform">
                       <span>Log In</span>
                       <ArrowRight size={14} />
                     </div>
@@ -98,14 +98,14 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           <div className="space-y-3 text-center">
             <button
               onClick={onStartSignup}
-              className="btn-primary w-full h-12 text-xs font-bold rounded-xl shadow-xs flex items-center justify-center gap-2"
+              className="btn-primary w-full h-12 text-xs font-semibold rounded-xl shadow-xs flex items-center justify-center gap-2"
             >
               <UserPlus size={16} />
               <span>{existingUsers.length > 0 ? 'Create another profile' : 'Get started (Sign up)'}</span>
               <ArrowRight size={16} />
             </button>
 
-            <p className="text-[10px] text-[var(--muted)]">
+            <p className="text-xs text-[var(--muted)]">
               Takes 60 seconds to configure your starting weight, target goal, and habits.
             </p>
           </div>
@@ -114,20 +114,20 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           <div className="grid grid-cols-3 gap-2 pt-4 border-t border-[var(--line)] text-center">
             <div className="p-2 space-y-1">
               <Flame size={16} className="mx-auto text-[var(--green)]" />
-              <b className="text-[10px] text-[var(--text)] block font-bold">Habit Streaks</b>
-              <span className="text-[9px] text-[var(--muted)] block">Complete all daily</span>
+              <b className="text-xs text-[var(--text)] block font-semibold">Habit Streaks</b>
+              <span className="text-xs text-[var(--muted)] block">Complete all daily</span>
             </div>
 
             <div className="p-2 space-y-1">
               <Trophy size={16} className="mx-auto text-[var(--amber)]" />
-              <b className="text-[10px] text-[var(--text)] block font-bold">₹ Rupee Stakes</b>
-              <span className="text-[9px] text-[var(--muted)] block">Skin in the game</span>
+              <b className="text-xs text-[var(--text)] block font-semibold">₹ Rupee Stakes</b>
+              <span className="text-xs text-[var(--muted)] block">Skin in the game</span>
             </div>
 
             <div className="p-2 space-y-1">
               <Shield size={16} className="mx-auto text-[var(--green)]" />
-              <b className="text-[10px] text-[var(--text)] block font-bold">Private & Local</b>
-              <span className="text-[9px] text-[var(--muted)] block">No cloud server</span>
+              <b className="text-xs text-[var(--text)] block font-semibold">Private & Local</b>
+              <span className="text-xs text-[var(--muted)] block">No cloud server</span>
             </div>
           </div>
         </div>

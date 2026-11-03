@@ -95,13 +95,12 @@ export const TodayView: React.FC<TodayViewProps> = ({
     const next = !act.completed;
     onToggleActivity(act.id, next);
 
-    // Only celebrate with confetti if completing the final activity of the day
     if (next && completedCount + 1 === todayActivities.length) {
       confetti({
         particleCount: 50,
         spread: 60,
         origin: { y: 0.65 },
-        colors: ['#3cd070', '#28a755', '#fbbf24']
+        colors: ['#34d399', '#22c55e', '#fbbf24']
       });
     }
   };
@@ -115,30 +114,33 @@ export const TodayView: React.FC<TodayViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* 1. Cleanly Aligned Page Header */}
-      <div className="page-head">
+      {/* 1. Cohesive, Production-Grade Page Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-[var(--line)]">
         <div>
-          <div className="eyebrow">YOUR ARENA</div>
-          <h1>{greeting}.</h1>
-          <div className="flex flex-wrap items-center gap-2 mt-2">
-            <span className="inline-flex items-center gap-1.5 font-bold text-xs text-[var(--amber)] bg-[var(--amber-pale)] border border-[var(--line)] px-2.5 py-1 rounded-full font-mono-num">
+          <span className="eyebrow block">
+            YOUR ARENA
+          </span>
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--text)] tracking-tight font-sans">
+            {greeting}.
+          </h1>
+          <div className="flex flex-wrap items-center gap-2.5 mt-2">
+            <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-[var(--amber-pale)] text-[var(--amber)] border border-[var(--line)] font-mono-num">
               <Flame size={13} className="fill-[var(--amber)] text-[var(--amber)]" />
               {currentUser.streakCount} Day Streak
             </span>
             <span className="text-xs text-[var(--muted)]">
-              {isDayFullyComplete ? '· Habits finished today' : '· Finish all habits to advance'}
+              {isDayFullyComplete ? '· All habits completed today' : '· Complete all to advance'}
             </span>
           </div>
         </div>
 
-        <div className="page-head-actions">
-          <button className="btn-primary" onClick={onOpenWeighInModal}>
-            <Plus size={16} /> Log weight
-          </button>
-        </div>
+        <button className="btn-primary self-start sm:self-center shrink-0" onClick={onOpenWeighInModal}>
+          <Plus size={15} />
+          <span>Log weight</span>
+        </button>
       </div>
 
-      {/* 2. HERO: TODAY'S HABITS (PRIMARY FOCUS) */}
+      {/* 2. HERO: TODAY'S HABITS (CALM, CLEAN, ELEVATED DESIGN) */}
       <div className="clean-card rounded-2xl p-5 sm:p-6 bg-[var(--surface)] border border-[var(--line)] shadow-xs space-y-4">
         {/* Habit Card Header */}
         <div className="flex items-start justify-between gap-4">
@@ -148,7 +150,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                 Today's Habits
               </h2>
               <span
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-full border border-[var(--line)] ${
+                className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border border-[var(--line)] ${
                   isDayFullyComplete
                     ? 'bg-[var(--green-pale)] text-[var(--green)]'
                     : 'bg-[var(--surface-subtle)] text-[var(--muted)]'
@@ -164,9 +166,10 @@ export const TodayView: React.FC<TodayViewProps> = ({
 
           <button
             onClick={onOpenDisciplineModal}
-            className="text-xs font-semibold text-[var(--muted)] hover:text-[var(--text)] flex items-center gap-1 py-1 px-2.5 rounded-lg border border-[var(--line)] hover:bg-[var(--surface-subtle)] transition shrink-0"
+            className="btn-secondary h-8 px-2.5 text-xs font-semibold shrink-0"
           >
-            <Sliders size={13} /> Edit
+            <Sliders size={13} />
+            <span>Edit</span>
           </button>
         </div>
 
@@ -178,7 +181,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
           />
         </div>
 
-        {/* Tactile Habit Checklist */}
+        {/* Habit Checklist: Clean & Dignified */}
         <div className="space-y-2 pt-1">
           {todayActivities.length > 0 ? (
             todayActivities.map((act) => {
@@ -189,40 +192,42 @@ export const TodayView: React.FC<TodayViewProps> = ({
                   onClick={() => handleCheckin(act)}
                   className={`w-full flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer select-none ${
                     act.completed
-                      ? 'bg-[var(--green-pale)] border-[var(--green)]/40 text-[var(--green)]'
+                      ? 'bg-[var(--surface-subtle)] border-[var(--line)] opacity-85 hover:opacity-100'
                       : 'bg-[var(--surface)] hover:bg-[var(--surface-subtle)] border-[var(--line)] text-[var(--text)]'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors shrink-0 ${
                         act.completed
-                          ? 'bg-[var(--green)]/20 text-[var(--green)]'
-                          : 'bg-[var(--surface-subtle)] text-[var(--muted)]'
+                          ? 'bg-[var(--surface)] text-[var(--muted)] border border-[var(--line)]'
+                          : 'bg-[var(--surface-subtle)] text-[var(--text)]'
                       }`}
                     >
                       <DisciplineIcon discipline={act.discipline} className="w-4 h-4" />
                     </div>
 
-                    <div>
+                    <div className="min-w-0">
                       <b
-                        className={`text-xs sm:text-sm font-semibold block ${
-                          act.completed ? 'line-through opacity-70' : ''
+                        className={`text-sm font-semibold block truncate ${
+                          act.completed
+                            ? 'line-through text-[var(--muted)] decoration-[var(--muted)]/50 font-normal'
+                            : 'text-[var(--text)]'
                         }`}
                       >
                         {meta.label}
                       </b>
-                      <small className="text-[10px] text-[var(--muted)] block mt-0.5">
+                      <small className="text-xs text-[var(--muted)] block truncate mt-0.5">
                         {act.completed ? 'Completed for today' : meta.description}
                       </small>
                     </div>
                   </div>
 
                   <div
-                    className={`w-6 h-6 rounded-full flex items-center justify-center border transition-all shrink-0 ${
+                    className={`w-6 h-6 rounded-full flex items-center justify-center border transition-all shrink-0 ml-3 ${
                       act.completed
-                        ? 'bg-[var(--green)] border-[var(--green)] text-black dark:text-black shadow-xs font-bold'
-                        : 'border-[var(--line)] hover:border-[var(--muted)]'
+                        ? 'bg-[var(--green)] border-[var(--green)] text-black dark:text-black font-bold shadow-xs'
+                        : 'border-2 border-[var(--line)] hover:border-[var(--green)]'
                     }`}
                   >
                     {act.completed && <Check size={14} strokeWidth={3} />}
@@ -247,12 +252,12 @@ export const TodayView: React.FC<TodayViewProps> = ({
         <span>Target: Dec 31, 2026</span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
         {/* Weight Card */}
         <div className="info-card">
           <div className="info-top">
             <span>Current Weight</span>
-            <Weight size={16} />
+            <Weight size={15} />
           </div>
 
           <div className="flex items-baseline justify-between mt-3">
@@ -264,7 +269,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
             </span>
           </div>
 
-          <p className="flex items-center gap-1.5 mt-1">
+          <p className="flex items-center gap-1.5 mt-1.5">
             {currentUser.goalType === 'gain' ? (
               <TrendingUp size={13} className="text-[var(--green)]" />
             ) : (
@@ -275,7 +280,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
             </span>
           </p>
 
-          <div className="w-full bg-[var(--surface-subtle)] rounded-full h-1.5 mt-2 overflow-hidden border border-[var(--line)]">
+          <div className="w-full bg-[var(--surface-subtle)] rounded-full h-1.5 mt-2.5 overflow-hidden border border-[var(--line)]">
             <div
               className={`h-full rounded-full ${
                 inDanger ? 'bg-[var(--danger)]' : 'bg-[var(--green)]'
@@ -284,8 +289,9 @@ export const TodayView: React.FC<TodayViewProps> = ({
             />
           </div>
 
-          <button className="card-link mt-3" onClick={onOpenWeighInModal}>
-            Update check-in <ChevronRight size={13} />
+          <button className="card-link mt-4" onClick={onOpenWeighInModal}>
+            <span>Update check-in</span>
+            <ChevronRight size={13} />
           </button>
         </div>
 
@@ -293,7 +299,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
         <div className="info-card">
           <div className="info-top">
             <span>The Wager Vault</span>
-            <Trophy size={16} />
+            <Trophy size={15} />
           </div>
 
           <strong className="goal-name mt-3">{betGroup.title}</strong>
@@ -303,20 +309,22 @@ export const TodayView: React.FC<TodayViewProps> = ({
             {betGroup.potAmount} Pot · {pace.daysLeft} days remaining until Dec 31
           </p>
 
-          <div className="flex items-center justify-between text-[10px] text-[var(--muted)] mt-1 font-mono-num">
+          <div className="flex items-center justify-between text-xs text-[var(--muted)] mt-1.5 font-mono-num">
             <span>Goal progress: {goalProgress}%</span>
-            <span>Rate: {pace.pacePerWeek} kg/wk</span>
+            <span>Target rate: {pace.pacePerWeek} kg/wk</span>
           </div>
 
-          <div className="flex items-center justify-between mt-auto pt-3">
+          <div className="flex items-center justify-between mt-auto pt-4 border-t border-[var(--line)]">
             <button className="card-link" onClick={() => onNavigateToTab('The Bet')}>
-              View standings <ChevronRight size={13} />
+              <span>View standings</span>
+              <ChevronRight size={13} />
             </button>
             <button
               onClick={onOpenShareModal}
-              className="text-[11px] font-bold text-[var(--muted)] hover:text-[var(--text)] flex items-center gap-1"
+              className="text-xs font-semibold text-[var(--muted)] hover:text-[var(--text)] flex items-center gap-1 transition"
             >
-              <Share2 size={13} /> Invite
+              <Share2 size={13} />
+              <span>Invite</span>
             </button>
           </div>
         </div>
@@ -326,7 +334,8 @@ export const TodayView: React.FC<TodayViewProps> = ({
       <div className="section-title">
         <h2>Group Standings</h2>
         <button className="card-link" onClick={() => onNavigateToTab('The Bet')}>
-          Full standings <ChevronRight size={13} />
+          <span>Full standings</span>
+          <ChevronRight size={13} />
         </button>
       </div>
 
@@ -350,7 +359,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
 
             return (
               <div key={u.id} className="activity-item">
-                <div className="w-5 text-xs font-bold text-[var(--muted)] font-mono-num">
+                <div className="w-6 text-xs font-bold text-[var(--muted)] font-mono-num">
                   #{index + 1}
                 </div>
 
@@ -360,11 +369,11 @@ export const TodayView: React.FC<TodayViewProps> = ({
                   <div className="flex items-center gap-2">
                     <b>{u.name}</b>
                     {isMe && (
-                      <span className="text-[8px] font-bold text-[var(--green)] bg-[var(--green-pale)] border border-[var(--line)] px-1 py-0.2 rounded">
+                      <span className="text-xs font-semibold text-[var(--green)] bg-[var(--green-pale)] border border-[var(--line)] px-1.5 py-0.5 rounded">
                         YOU
                       </span>
                     )}
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--muted)] bg-[var(--surface-subtle)] border border-[var(--line)] px-1.5 py-0.5 rounded">
+                    <span className="text-xs font-semibold uppercase tracking-wider text-[var(--muted)] bg-[var(--surface-subtle)] border border-[var(--line)] px-1.5 py-0.5 rounded">
                       {u.goalType === 'gain' ? 'Bulk' : 'Cut'}
                     </span>
                   </div>
@@ -378,11 +387,11 @@ export const TodayView: React.FC<TodayViewProps> = ({
                     {progress}%
                   </div>
                   {isUserInDanger ? (
-                    <span className="text-[9px] text-[var(--danger)] font-semibold flex items-center gap-1 justify-end">
-                      <AlertCircle size={10} /> Behind
+                    <span className="text-xs text-[var(--danger)] font-semibold flex items-center gap-1 justify-end">
+                      <AlertCircle size={11} /> Behind
                     </span>
                   ) : (
-                    <span className="text-[9px] text-[var(--green)] font-semibold">On track</span>
+                    <span className="text-xs text-[var(--green)] font-semibold">On track</span>
                   )}
                 </div>
               </div>
