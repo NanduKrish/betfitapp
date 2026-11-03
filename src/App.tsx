@@ -373,6 +373,37 @@ export function App() {
     setToast(`Joined ${betGroup.title}!`);
   };
 
+  // Delete user profile
+  const handleDeleteUser = (userId: string) => {
+    const userToDelete = users.find((u) => u.id === userId);
+    const remainingUsers = users.filter((u) => u.id !== userId);
+
+    setUsers(remainingUsers);
+
+    setWeighInsMap((prev) => {
+      const next = { ...prev };
+      delete next[userId];
+      return next;
+    });
+
+    setActivitiesMap((prev) => {
+      const next = { ...prev };
+      delete next[userId];
+      return next;
+    });
+
+    if (currentUserId === userId) {
+      if (remainingUsers.length > 0) {
+        setCurrentUserId(remainingUsers[0].id);
+      } else {
+        setCurrentUserId(null);
+        setIsSigningUp(false);
+      }
+    }
+
+    setToast(`Deleted profile: ${userToDelete?.name || 'User'}`);
+  };
+
   // Log out
   const handleLogout = () => {
     setCurrentUserId(null);
@@ -509,6 +540,7 @@ export function App() {
             setToast('Switched participant.');
           }}
           onAddNewUser={() => setIsSigningUp(true)}
+          onDeleteUser={handleDeleteUser}
           onLogout={handleLogout}
           onExportData={handleExportData}
           onResetData={handleResetData}

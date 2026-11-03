@@ -51,6 +51,10 @@ export const TodayView: React.FC<TodayViewProps> = ({
   onNavigateToTab
 }) => {
   const firstName = currentUser.name.split(' ')[0] || 'Friend';
+  const greeting =
+    firstName.toLowerCase() === 'hi'
+      ? `Welcome, ${currentUser.name}`
+      : `Hi, ${firstName}`;
 
   const goalProgress = calculateGoalProgress(
     currentUser.startingWeight,
@@ -97,12 +101,11 @@ export const TodayView: React.FC<TodayViewProps> = ({
         particleCount: 50,
         spread: 60,
         origin: { y: 0.65 },
-        colors: ['#6f895f', '#8ba87a', '#d4953c']
+        colors: ['#3cd070', '#28a755', '#fbbf24']
       });
     }
   };
 
-  // Sort other participants
   const otherUsers = allUsers.filter((u) => u.id !== currentUser.id);
   const rankedUsers = [...allUsers].sort((a, b) => {
     const pA = calculateGoalProgress(a.startingWeight, a.currentWeight, a.targetWeight, a.goalType);
@@ -112,61 +115,63 @@ export const TodayView: React.FC<TodayViewProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* 1. Page Header with Streak Pill */}
-      <div className="page-head mb-2">
+      {/* 1. Cleanly Aligned Page Header */}
+      <div className="page-head">
         <div>
           <div className="eyebrow">YOUR ARENA</div>
-          <h1>Hi, {firstName}.</h1>
-          <p className="flex items-center gap-2 mt-1">
-            <span className="inline-flex items-center gap-1 font-bold text-xs text-[var(--amber)] bg-[var(--amber-pale)] px-2 py-0.5 rounded-md font-mono-num">
-              <Flame size={13} className="fill-[var(--amber)]" />
+          <h1>{greeting}.</h1>
+          <div className="flex flex-wrap items-center gap-2 mt-2">
+            <span className="inline-flex items-center gap-1.5 font-bold text-xs text-[var(--amber)] bg-[var(--amber-pale)] border border-[var(--line)] px-2.5 py-1 rounded-full font-mono-num">
+              <Flame size={13} className="fill-[var(--amber)] text-[var(--amber)]" />
               {currentUser.streakCount} Day Streak
             </span>
             <span className="text-xs text-[var(--muted)]">
-              {isDayFullyComplete ? '· Secured for today!' : '· Finish habits to advance'}
+              {isDayFullyComplete ? '· Habits finished today' : '· Finish all habits to advance'}
             </span>
-          </p>
+          </div>
         </div>
 
-        <button className="btn-primary" onClick={onOpenWeighInModal}>
-          <Plus size={16} /> Log weight
-        </button>
+        <div className="page-head-actions">
+          <button className="btn-primary" onClick={onOpenWeighInModal}>
+            <Plus size={16} /> Log weight
+          </button>
+        </div>
       </div>
 
-      {/* 2. HERO: TODAY'S HABITS (PRIMARY FOCAL POINT) */}
+      {/* 2. HERO: TODAY'S HABITS (PRIMARY FOCUS) */}
       <div className="clean-card rounded-2xl p-5 sm:p-6 bg-[var(--surface)] border border-[var(--line)] shadow-xs space-y-4">
         {/* Habit Card Header */}
-        <div className="flex items-start justify-between">
+        <div className="flex items-start justify-between gap-4">
           <div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-base sm:text-lg font-bold text-[var(--text)] font-sans">
                 Today's Habits
               </h2>
               <span
-                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                className={`text-[10px] font-bold px-2 py-0.5 rounded-full border border-[var(--line)] ${
                   isDayFullyComplete
-                    ? 'bg-[var(--green-pale)] text-[var(--green-dark)]'
+                    ? 'bg-[var(--green-pale)] text-[var(--green)]'
                     : 'bg-[var(--surface-subtle)] text-[var(--muted)]'
                 }`}
               >
                 {isDayFullyComplete ? 'Streak secured today' : 'Complete all to build streak'}
               </span>
             </div>
-            <p className="text-xs text-[var(--muted)] mt-0.5">
+            <p className="text-xs text-[var(--muted)] mt-1">
               {completedCount} of {todayActivities.length} habits completed ({habitCompletionPct}%)
             </p>
           </div>
 
           <button
             onClick={onOpenDisciplineModal}
-            className="text-xs font-semibold text-[var(--muted)] hover:text-[var(--text)] flex items-center gap-1 p-1 rounded-md hover:bg-[var(--surface-subtle)] transition"
+            className="text-xs font-semibold text-[var(--muted)] hover:text-[var(--text)] flex items-center gap-1 py-1 px-2.5 rounded-lg border border-[var(--line)] hover:bg-[var(--surface-subtle)] transition shrink-0"
           >
-            <Sliders size={14} /> Edit
+            <Sliders size={13} /> Edit
           </button>
         </div>
 
         {/* Dynamic Habit Completion Progress Bar */}
-        <div className="w-full bg-[var(--surface-subtle)] rounded-full h-2 overflow-hidden">
+        <div className="w-full bg-[var(--surface-subtle)] rounded-full h-2 overflow-hidden border border-[var(--line)]">
           <div
             className="h-full bg-[var(--green)] rounded-full transition-all duration-300"
             style={{ width: `${habitCompletionPct}%` }}
@@ -184,7 +189,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                   onClick={() => handleCheckin(act)}
                   className={`w-full flex items-center justify-between p-3.5 rounded-xl border transition-all cursor-pointer select-none ${
                     act.completed
-                      ? 'bg-[var(--green-pale)] border-[var(--green)]/30 text-[var(--green-dark)]'
+                      ? 'bg-[var(--green-pale)] border-[var(--green)]/40 text-[var(--green)]'
                       : 'bg-[var(--surface)] hover:bg-[var(--surface-subtle)] border-[var(--line)] text-[var(--text)]'
                   }`}
                 >
@@ -192,7 +197,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                     <div
                       className={`w-9 h-9 rounded-xl flex items-center justify-center transition-colors shrink-0 ${
                         act.completed
-                          ? 'bg-[var(--green)]/20 text-[var(--green-dark)]'
+                          ? 'bg-[var(--green)]/20 text-[var(--green)]'
                           : 'bg-[var(--surface-subtle)] text-[var(--muted)]'
                       }`}
                     >
@@ -207,7 +212,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                       >
                         {meta.label}
                       </b>
-                      <small className="text-[10px] text-[var(--muted)] block">
+                      <small className="text-[10px] text-[var(--muted)] block mt-0.5">
                         {act.completed ? 'Completed for today' : meta.description}
                       </small>
                     </div>
@@ -216,7 +221,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
                   <div
                     className={`w-6 h-6 rounded-full flex items-center justify-center border transition-all shrink-0 ${
                       act.completed
-                        ? 'bg-[var(--green)] border-[var(--green)] text-white shadow-xs'
+                        ? 'bg-[var(--green)] border-[var(--green)] text-black dark:text-black shadow-xs font-bold'
                         : 'border-[var(--line)] hover:border-[var(--muted)]'
                     }`}
                   >
@@ -227,7 +232,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
             })
           ) : (
             <div className="text-center py-6 space-y-2">
-              <p className="text-xs text-[var(--muted)]">No habits selected yet.</p>
+              <p className="text-xs text-[var(--muted)]">No habits chosen yet.</p>
               <button className="btn-primary text-xs" onClick={onOpenDisciplineModal}>
                 <Plus size={14} /> Choose your habits
               </button>
@@ -239,7 +244,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
       {/* 3. SECONDARY OVERVIEW GRID (WEIGHT & WAGER) */}
       <div className="section-title">
         <h2>Weight & Wager Overview</h2>
-        <span>Dec 31 Target Deadline</span>
+        <span>Target: Dec 31, 2026</span>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -270,7 +275,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
             </span>
           </p>
 
-          <div className="w-full bg-[var(--surface-subtle)] rounded-full h-1.5 mt-2 overflow-hidden">
+          <div className="w-full bg-[var(--surface-subtle)] rounded-full h-1.5 mt-2 overflow-hidden border border-[var(--line)]">
             <div
               className={`h-full rounded-full ${
                 inDanger ? 'bg-[var(--danger)]' : 'bg-[var(--green)]'
@@ -300,7 +305,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
 
           <div className="flex items-center justify-between text-[10px] text-[var(--muted)] mt-1 font-mono-num">
             <span>Goal progress: {goalProgress}%</span>
-            <span>Target rate: {pace.pacePerWeek} kg/wk</span>
+            <span>Rate: {pace.pacePerWeek} kg/wk</span>
           </div>
 
           <div className="flex items-center justify-between mt-auto pt-3">
@@ -355,11 +360,11 @@ export const TodayView: React.FC<TodayViewProps> = ({
                   <div className="flex items-center gap-2">
                     <b>{u.name}</b>
                     {isMe && (
-                      <span className="text-[8px] font-bold text-[var(--green-dark)] bg-[var(--green-pale)] px-1 py-0.2 rounded">
+                      <span className="text-[8px] font-bold text-[var(--green)] bg-[var(--green-pale)] border border-[var(--line)] px-1 py-0.2 rounded">
                         YOU
                       </span>
                     )}
-                    <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--muted)] bg-[var(--surface-subtle)] px-1.5 py-0.5 rounded">
+                    <span className="text-[9px] font-bold uppercase tracking-wider text-[var(--muted)] bg-[var(--surface-subtle)] border border-[var(--line)] px-1.5 py-0.5 rounded">
                       {u.goalType === 'gain' ? 'Bulk' : 'Cut'}
                     </span>
                   </div>

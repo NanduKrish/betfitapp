@@ -5,11 +5,8 @@ import {
   Plus,
   Flame,
   AlertCircle,
-  TrendingDown,
-  TrendingUp,
-  Clock,
-  ShieldAlert,
-  Sliders
+  Sliders,
+  Users
 } from 'lucide-react';
 import { UserProfile, BetGroup, BanterItem } from '../types';
 import { Avatar } from './Avatar';
@@ -56,19 +53,19 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   );
 
   return (
-    <div>
-      {/* Page Header */}
+    <div className="space-y-6">
+      {/* Responsive Page Header */}
       <div className="page-head">
         <div>
           <div className="eyebrow">THE WAGER</div>
           <h1>{betGroup.title}</h1>
           <p>
             {betGroup.currency || '₹'}
-            {betGroup.potAmount} collective stakes in the vault. Target deadline: December 31.
+            {betGroup.potAmount} collective stakes in the vault. Target deadline: December 31, 2026.
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="page-head-actions">
           <button className="btn-secondary" onClick={onOpenShareModal}>
             <Share2 size={15} /> Invite
           </button>
@@ -78,7 +75,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         </div>
       </div>
 
-      {/* Summary Cards */}
+      {/* Responsive Summary Cards */}
       <div className="progress-summary">
         <div>
           <span>TOTAL VAULT</span>
@@ -93,15 +90,17 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         </div>
         <div>
           <span>PARTICIPANTS</span>
-          <b>{allUsers.length} Friends</b>
+          <b>{allUsers.length} {allUsers.length === 1 ? 'Person' : 'Friends'}</b>
         </div>
         <div>
           <span>FORFEIT PENALTY</span>
-          <b className="text-xs truncate">{betGroup.forfeitDescription || 'Dinner'}</b>
+          <b className="text-xs truncate block" title={betGroup.forfeitDescription}>
+            {betGroup.forfeitDescription || 'Dinner'}
+          </b>
         </div>
       </div>
 
-      {/* Standings Title */}
+      {/* Standings Section */}
       <div className="section-title">
         <h2>Official Standings</h2>
         <span>Ranked by % of Goal Completed</span>
@@ -141,11 +140,11 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
             <div
               key={user.id}
               className={`goal-card transition ${
-                isMe ? 'border-[var(--green)] bg-[var(--green-pale)]' : ''
+                isMe ? 'border-[var(--green)]/60 bg-[var(--green-pale)]' : ''
               }`}
             >
-              <div className="flex flex-col items-center justify-center w-8 text-center shrink-0">
-                <span className="font-mono-num font-extrabold text-sm text-[var(--muted)]">
+              <div className="flex flex-col items-center justify-center w-7 sm:w-8 text-center shrink-0 pt-1">
+                <span className="font-mono-num font-extrabold text-sm sm:text-base text-[var(--muted)]">
                   #{idx + 1}
                 </span>
                 {idx === 0 && <Trophy size={14} className="text-[var(--amber)] mt-1" />}
@@ -155,14 +154,14 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                 <Avatar initials={user.avatarInitials} colorClass={user.avatarColor} size="md" />
               </div>
 
-              <div className="goal-main">
-                <div className="flex items-center justify-between">
+              <div className="goal-main min-w-0">
+                <div className="flex items-center justify-between gap-2 flex-wrap">
                   <div className="flex items-center gap-2">
                     <span className="goal-meta">
                       {user.goalType === 'gain' ? 'BULK' : 'CUT'}
                     </span>
                     {isMe && (
-                      <span className="text-[9px] font-bold text-[var(--green-dark)] bg-[var(--surface)] px-1.5 py-0.2 rounded border border-[var(--line)]">
+                      <span className="text-[9px] font-bold text-[var(--green)] bg-[var(--surface)] px-1.5 py-0.2 rounded border border-[var(--line)]">
                         YOU
                       </span>
                     )}
@@ -173,22 +172,22 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                   </span>
                 </div>
 
-                <h3>{user.name}</h3>
+                <h3 className="truncate">{user.name}</h3>
 
-                <p className="flex items-center gap-2 text-[11px]">
+                <p className="flex items-center gap-1.5 text-[11px] flex-wrap">
                   <span>
                     Current: <strong>{user.currentWeight}kg</strong>
                   </span>
                   <span>·</span>
                   <span>Target: <strong>{user.targetWeight}kg</strong></span>
                   <span>·</span>
-                  <span className="font-semibold text-[var(--green-dark)]">
+                  <span className="font-semibold text-[var(--green)]">
                     {delta.label}
                   </span>
                 </p>
 
                 {/* Progress Bar */}
-                <div className="w-full bg-[var(--surface-subtle)] rounded-full h-1.5 mt-2.5 overflow-hidden">
+                <div className="w-full bg-[var(--surface-subtle)] rounded-full h-1.5 mt-2.5 overflow-hidden border border-[var(--line)]">
                   <div
                     className={`h-full rounded-full transition-all duration-500 ${
                       inDanger ? 'bg-[var(--danger)]' : 'bg-[var(--green)]'
@@ -211,6 +210,22 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         })}
       </div>
 
+      {/* Solo State Notice: If user is the only one in the bet */}
+      {allUsers.length === 1 && (
+        <div className="empty-card">
+          <div className="empty-icon">
+            <Users size={22} />
+          </div>
+          <b>Invite friends to this bet</b>
+          <p>
+            You are currently tracking solo. Send the invite link to your friends so they can enter their target weights and compete with you.
+          </p>
+          <button className="btn-primary text-xs" onClick={onOpenShareModal}>
+            <Share2 size={14} /> Share invite link
+          </button>
+        </div>
+      )}
+
       {/* Forfeit & Bet Rules Footer */}
       <div className="section-title recent-title">
         <h2>Wager Terms & Rules</h2>
@@ -219,22 +234,22 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
         </button>
       </div>
 
-      <div className="settings-card">
+      <div className="settings-card flex-wrap">
         <div>
           <b>Fair Goal Percentage Engine</b>
           <p>
             Whether cutting fat or gaining muscle, participants are evaluated by % of target weight achieved by Dec 31.
           </p>
         </div>
-        <span className="storage-badge">RULE 1</span>
+        <span className="storage-badge shrink-0">RULE 1</span>
       </div>
 
-      <div className="settings-card">
+      <div className="settings-card flex-wrap">
         <div>
           <b>Loser Forfeit Rule</b>
           <p>{betGroup.forfeitDescription || 'The participant with the lowest progress treats the winner.'}</p>
         </div>
-        <span className="storage-badge">PENALTY</span>
+        <span className="storage-badge shrink-0">PENALTY</span>
       </div>
     </div>
   );

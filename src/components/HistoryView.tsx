@@ -63,9 +63,11 @@ export const HistoryView: React.FC<HistoryViewProps> = ({
             Track your official weigh-ins toward your {currentUser.goalType === 'gain' ? 'bulking' : 'weight loss'} goal.
           </p>
         </div>
-        <button className="btn-primary" onClick={onOpenWeighInModal}>
-          <Plus size={16} /> Log weight
-        </button>
+        <div className="page-head-actions">
+          <button className="btn-primary" onClick={onOpenWeighInModal}>
+            <Plus size={16} /> Log weight
+          </button>
+        </div>
       </div>
 
       {/* Progress Metrics Summary */}

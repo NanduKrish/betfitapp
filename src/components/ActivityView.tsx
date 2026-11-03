@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Plus, Flame, Check, Sliders, Calendar } from 'lucide-react';
+import React from 'react';
+import { Plus, Sliders, Calendar, Check } from 'lucide-react';
 import { UserProfile, ActivityLog } from '../types';
 import { DISCIPLINES } from '../data/constants';
 import { DisciplineIcon } from './DisciplineIcon';
@@ -24,15 +24,18 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
   const completedToday = todayActivities.filter((a) => a.completed).length;
 
   return (
-    <div>
+    <div className="space-y-6">
       {/* Page Header */}
       <div className="page-head">
         <div>
           <div className="eyebrow">YOUR MOVEMENT</div>
           <h1>Activity & Habits</h1>
-          <p>Consistency builds the foundation. Complete all chosen activities to secure your daily streak.</p>
+          <p>
+            Consistency builds the foundation. Complete all chosen activities to secure your daily streak.
+          </p>
         </div>
-        <div className="flex items-center gap-2">
+
+        <div className="page-head-actions">
           <button className="btn-secondary" onClick={onOpenDisciplineModal}>
             <Sliders size={15} /> Choose habits
           </button>
@@ -42,7 +45,7 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
         </div>
       </div>
 
-      {/* Summary Cards */}
+      {/* Responsive Progress Summary */}
       <div className="progress-summary">
         <div>
           <span>CURRENT STREAK</span>
@@ -67,43 +70,49 @@ export const ActivityView: React.FC<ActivityViewProps> = ({
       {/* Today's Checklist */}
       <div className="section-title">
         <h2>Today's Checklist</h2>
-        <span>Must finish all for streak</span>
+        <span>Must complete all for streak</span>
       </div>
 
-      <div className="list-card mb-8">
-        {todayActivities.map((act) => {
-          const meta = DISCIPLINES[act.discipline] || DISCIPLINES.custom;
-          return (
-            <div
-              key={act.id}
-              onClick={() => onToggleActivity(act.id, !act.completed)}
-              className="activity-item cursor-pointer hover:bg-[var(--surface-subtle)] px-2 -mx-2 rounded-lg transition"
-            >
+      <div className="list-card">
+        {todayActivities.length > 0 ? (
+          todayActivities.map((act) => {
+            const meta = DISCIPLINES[act.discipline] || DISCIPLINES.custom;
+            return (
               <div
-                className={`activity-icon transition-colors ${
-                  act.completed ? 'bg-[var(--green-pale)] text-[var(--green-dark)]' : ''
-                }`}
+                key={act.id}
+                onClick={() => onToggleActivity(act.id, !act.completed)}
+                className="activity-item cursor-pointer hover:bg-[var(--surface-subtle)] px-2 -mx-2 rounded-lg transition"
               >
-                <DisciplineIcon discipline={act.discipline} className="w-4 h-4" />
-              </div>
+                <div
+                  className={`activity-icon transition-colors ${
+                    act.completed ? 'bg-[var(--green-pale)] text-[var(--green)]' : ''
+                  }`}
+                >
+                  <DisciplineIcon discipline={act.discipline} className="w-4 h-4" />
+                </div>
 
-              <div className="activity-detail">
-                <b className={act.completed ? 'line-through opacity-70' : ''}>{meta.label}</b>
-                <small>{act.completed ? 'Completed today' : meta.description}</small>
-              </div>
+                <div className="activity-detail">
+                  <b className={act.completed ? 'line-through opacity-70' : ''}>{meta.label}</b>
+                  <small>{act.completed ? 'Completed today' : meta.description}</small>
+                </div>
 
-              <div
-                className={`w-6 h-6 rounded-full flex items-center justify-center border transition-all ${
-                  act.completed
-                    ? 'bg-[var(--green)] border-[var(--green)] text-white'
-                    : 'border-[var(--line)] hover:border-[var(--muted)]'
-                }`}
-              >
-                {act.completed && <Check size={14} strokeWidth={3} />}
+                <div
+                  className={`w-6 h-6 rounded-full flex items-center justify-center border transition-all ${
+                    act.completed
+                      ? 'bg-[var(--green)] border-[var(--green)] text-black dark:text-black font-bold shadow-xs'
+                      : 'border-[var(--line)] hover:border-[var(--muted)]'
+                  }`}
+                >
+                  {act.completed && <Check size={14} strokeWidth={3} />}
+                </div>
               </div>
-            </div>
-          );
-        })}
+            );
+          })
+        ) : (
+          <div className="py-6 text-center text-xs text-[var(--muted)]">
+            No habits chosen yet. Click "Choose habits" above.
+          </div>
+        )}
       </div>
 
       {/* Past Activity Logs */}
