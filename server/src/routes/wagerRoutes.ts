@@ -7,7 +7,7 @@ const router = Router();
 
 // Preview invite link (Public - no auth required to view details before joining)
 router.get('/invite/:code', (req: Request, res: Response) => {
-  const preview = WagerService.previewInvite(req.params.code);
+  const preview = WagerService.previewInvite(req.params.code as string);
   if (!preview) {
     return res.status(404).json({ error: 'Showdown not found or invite expired' });
   }
@@ -33,7 +33,7 @@ router.post('/', requireAuth, (req: Request, res: Response, next: NextFunction) 
 
 // Get wager details
 router.get('/:id', requireAuth, (req: Request, res: Response) => {
-  const wager = WagerService.getWagerById(req.params.id);
+  const wager = WagerService.getWagerById(req.params.id as string);
   if (!wager) {
     return res.status(404).json({ error: 'Wager not found' });
   }
@@ -44,7 +44,7 @@ router.get('/:id', requireAuth, (req: Request, res: Response) => {
 router.post('/:id/join', requireAuth, (req: Request, res: Response, next: NextFunction) => {
   try {
     const data = JoinWagerSchema.parse(req.body);
-    const result = WagerService.joinWager(req.user!, req.params.id, data);
+    const result = WagerService.joinWager(req.user!, req.params.id as string, data);
     res.json(result);
   } catch (err) {
     next(err);
@@ -54,7 +54,7 @@ router.post('/:id/join', requireAuth, (req: Request, res: Response, next: NextFu
 // Update wager terms (Owner only)
 router.put('/:id', requireAuth, (req: Request, res: Response, next: NextFunction) => {
   try {
-    const updated = WagerService.updateWager(req.user!.id, req.params.id, req.body);
+    const updated = WagerService.updateWager(req.user!.id, req.params.id as string, req.body);
     res.json({ wager: updated });
   } catch (err) {
     next(err);
@@ -64,7 +64,7 @@ router.put('/:id', requireAuth, (req: Request, res: Response, next: NextFunction
 // Delete wager (Owner only)
 router.delete('/:id', requireAuth, (req: Request, res: Response, next: NextFunction) => {
   try {
-    const success = WagerService.deleteWager(req.user!.id, req.params.id);
+    const success = WagerService.deleteWager(req.user!.id, req.params.id as string);
     if (!success) {
       return res.status(404).json({ error: 'Wager not found' });
     }
@@ -73,5 +73,6 @@ router.delete('/:id', requireAuth, (req: Request, res: Response, next: NextFunct
     next(err);
   }
 });
+
 
 export default router;

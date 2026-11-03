@@ -27,7 +27,7 @@ const allowedOrigins = [
 
 app.use(
   cors({
-    origin: (origin, callback) => {
+    origin: (origin: string | undefined, callback: any) => {
       // allow requests with no origin (like mobile apps, curl)
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
@@ -44,7 +44,7 @@ app.use(express.json());
 app.use(authMiddleware);
 
 // Healthcheck
-app.get('/api/health', (req, res) => {
+app.get('/api/health', (req: express.Request, res: express.Response) => {
   res.json({
     status: 'ok',
     service: 'BetFit Arena Production API',
@@ -52,6 +52,7 @@ app.get('/api/health', (req, res) => {
     timestamp: new Date().toISOString(),
   });
 });
+
 
 // Mount Routes
 app.use('/api/auth', authRoutes);

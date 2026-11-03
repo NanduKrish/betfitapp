@@ -18,8 +18,9 @@ router.post('/', requireAuth, (req: Request, res: Response, next: NextFunction) 
 
 // Get weigh-in history for a wager
 router.get('/:wagerId', requireAuth, (req: Request, res: Response) => {
-  const history = WeighInService.getHistory(req.user!.id, req.params.wagerId);
+  const history = WeighInService.getHistory(req.user!.id, req.params.wagerId as string);
   res.json({ history });
 });
+
 
 export default router;

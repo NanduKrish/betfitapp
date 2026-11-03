@@ -10,12 +10,13 @@ export function errorHandler(
   if (err instanceof ZodError) {
     return res.status(400).json({
       error: 'Validation Error',
-      details: err.errors.map((e) => ({
+      details: err.issues.map((e: any) => ({
         path: e.path.join('.'),
         message: e.message,
       })),
     });
   }
+
 
   console.error('[API Error]:', err);
   const status = err.status || 500;
