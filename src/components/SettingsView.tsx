@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, Trash2, UserRound, Sparkles, Shield, RefreshCw } from 'lucide-react';
+import { Download, Trash2, UserPlus, LogOut, Shield, RefreshCw } from 'lucide-react';
 import { UserProfile, BetGroup } from '../types';
 
 interface SettingsViewProps {
@@ -7,7 +7,8 @@ interface SettingsViewProps {
   allUsers: UserProfile[];
   betGroup: BetGroup;
   onSwitchUser: (userId: string) => void;
-  onStartOnboarding: () => void;
+  onAddNewUser: () => void;
+  onLogout: () => void;
   onExportData: () => void;
   onResetData: () => void;
 }
@@ -17,7 +18,8 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   allUsers,
   betGroup,
   onSwitchUser,
-  onStartOnboarding,
+  onAddNewUser,
+  onLogout,
   onExportData,
   onResetData
 }) => {
@@ -28,37 +30,45 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         <div>
           <div className="eyebrow">PREFERENCES</div>
           <h1>Settings</h1>
-          <p>Manage your participant profile, storage, and local BetFit data.</p>
+          <p>Manage your participant account, switch profiles, and manage local BetFit data.</p>
         </div>
       </div>
 
-      {/* Switch Active User */}
+      {/* Switch Active User / Account */}
       <div className="settings-card">
         <div>
           <b>Active Participant</b>
-          <p>Switch between friends in this group bet to view their dashboard or log progress.</p>
+          <p>Switch between profiles saved on this device, or add another participant.</p>
         </div>
-        <select
-          value={currentUser.id}
-          onChange={(e) => onSwitchUser(e.target.value)}
-          className="h-9 px-3 text-xs bg-[var(--surface-subtle)] border border-[var(--line)] rounded-lg text-[var(--text)]"
-        >
-          {allUsers.map((u) => (
-            <option key={u.id} value={u.id}>
-              {u.name} ({u.goalType === 'gain' ? 'Bulk' : 'Cut'} · {u.currentWeight}kg)
-            </option>
-          ))}
-        </select>
+        <div className="flex items-center gap-2">
+          {allUsers.length > 1 && (
+            <select
+              value={currentUser.id}
+              onChange={(e) => onSwitchUser(e.target.value)}
+              className="h-9 px-3 text-xs bg-[var(--surface-subtle)] border border-[var(--line)] rounded-lg text-[var(--text)]"
+            >
+              {allUsers.map((u) => (
+                <option key={u.id} value={u.id}>
+                  {u.name} ({u.goalType === 'gain' ? 'Bulk' : 'Cut'})
+                </option>
+              ))}
+            </select>
+          )}
+
+          <button className="btn-secondary text-xs h-9 px-3" onClick={onAddNewUser}>
+            <UserPlus size={14} /> Add User
+          </button>
+        </div>
       </div>
 
-      {/* Onboarding & Blank Slate */}
+      {/* Log Out */}
       <div className="settings-card">
         <div>
-          <b>Onboarding & Blank Slate</b>
-          <p>Experience the 5-step onboarding flow as a fresh user or set up a brand new bet.</p>
+          <b>Account Session</b>
+          <p>Log out to the welcome screen to switch accounts or register a new participant.</p>
         </div>
-        <button className="btn-secondary" onClick={onStartOnboarding}>
-          <Sparkles size={15} /> Launch Onboarding
+        <button className="btn-secondary text-xs h-9 px-3" onClick={onLogout}>
+          <LogOut size={14} /> Log out
         </button>
       </div>
 
@@ -66,7 +76,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <div className="settings-card">
         <div>
           <b>Local Browser Storage</b>
-          <p>Your habit streaks, weigh-in history, and bet pot are saved securely on this device.</p>
+          <p>Your habit streaks, weigh-in records, and wager stakes are saved directly in this browser.</p>
         </div>
         <span className="storage-badge">OFFLINE LOCAL</span>
       </div>
@@ -86,7 +96,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       <div className="settings-card danger-row">
         <div>
           <b className="text-[var(--danger)]">Reset Application</b>
-          <p>Clear all local state and restore demo participants and settings.</p>
+          <p>Wipe all local data and return to a completely clean slate.</p>
         </div>
         <button className="btn-danger" onClick={onResetData}>
           <Trash2 size={15} /> Reset Data
@@ -94,7 +104,7 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
       </div>
 
       <p className="settings-foot">
-        BetFit Arena is designed for peer accountability without requiring external servers or accounts. All stakes are displayed in Indian Rupees (₹).
+        BetFit Arena is designed for peer accountability without external server tracking. All stakes are displayed in Indian Rupees (₹).
       </p>
     </div>
   );

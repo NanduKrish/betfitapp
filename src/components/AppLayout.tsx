@@ -11,7 +11,8 @@ import {
   Sun,
   Moon,
   Info,
-  Sparkles
+  UserPlus,
+  LogOut
 } from 'lucide-react';
 import { UserProfile } from '../types';
 
@@ -22,7 +23,8 @@ interface AppLayoutProps {
   isDarkMode: boolean;
   onToggleTheme: () => void;
   onOpenProfile: () => void;
-  onStartOnboarding: () => void;
+  onAddNewUser: () => void;
+  onLogout: () => void;
   children: React.ReactNode;
 }
 
@@ -33,7 +35,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   isDarkMode,
   onToggleTheme,
   onOpenProfile,
-  onStartOnboarding,
+  onAddNewUser,
+  onLogout,
   children
 }) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -98,12 +101,23 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           <button
             className="side-link"
             onClick={() => {
-              onStartOnboarding();
+              onAddNewUser();
               setMobileMenuOpen(false);
             }}
           >
-            <Sparkles size={16} />
-            <span>New User Flow</span>
+            <UserPlus size={16} />
+            <span>Add new user</span>
+          </button>
+
+          <button
+            className="side-link"
+            onClick={() => {
+              onLogout();
+              setMobileMenuOpen(false);
+            }}
+          >
+            <LogOut size={16} />
+            <span>Log out</span>
           </button>
 
           <button className="theme-toggle-btn" onClick={onToggleTheme}>

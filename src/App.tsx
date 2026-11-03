@@ -11,8 +11,7 @@ import {
   INITIAL_BET_GROUP,
   INITIAL_USERS,
   INITIAL_WEIGH_INS,
-  INITIAL_TODAY_ACTIVITIES,
-  INITIAL_BANTER
+  INITIAL_TODAY_ACTIVITIES
 } from './data/initialData';
 import { AppLayout } from './components/AppLayout';
 import { TodayView } from './components/TodayView';
@@ -20,6 +19,7 @@ import { LeaderboardView } from './components/LeaderboardView';
 import { ActivityView } from './components/ActivityView';
 import { HistoryView } from './components/HistoryView';
 import { SettingsView } from './components/SettingsView';
+import { AuthScreen } from './components/AuthScreen';
 import { OnboardingFlow } from './components/OnboardingFlow';
 import { LogWeighInModal } from './components/LogWeighInModal';
 import { DisciplineModal } from './components/DisciplineModal';
@@ -30,7 +30,19 @@ import { EditBetModal } from './components/EditBetModal';
 import { Check } from 'lucide-react';
 
 export function App() {
-  // Theme state: defaults to light to showcase the warm minimal aesthetic from sample
+  // One-time reset to clear previous dummy data and start fresh as requested
+  useEffect(() => {
+    if (localStorage.getItem('betfit_fresh_start_v1') !== 'true') {
+      localStorage.removeItem('betfit_users');
+      localStorage.removeItem('betfit_active_user');
+      localStorage.removeItem('betfit_weigh_ins');
+      localStorage.removeItem('betfit_activities');
+      localStorage.removeItem('betfit_banter');
+      localStorage.setItem('betfit_fresh_start_v1', 'true');
+    }
+  }, []);
+
+  // Theme state: defaults to light for the organic minimal look
   const [theme, setTheme] = useState<'dark' | 'light'>(() => {
     const saved = localStorage.getItem('betfit_theme');
     if (saved === 'dark' || saved === 'light') return saved;
@@ -51,20 +63,23 @@ export function App() {
     setTheme((prev) => (prev === 'dark' ? 'light' : 'dark'));
   };
 
-  // Onboarding state
-  const [isOnboarded, setIsOnboarded] = useState<boolean>(() => {
-    const saved = localStorage.getItem('betfit_onboarded');
-    return saved ? saved === 'true' : true; // Default to true so existing users see dashboard, but can launch onboarding anytime
-  });
-
-  // LocalStorage-backed state
+  // User accounts state (starts empty/fresh)
   const [users, setUsers] = useState<UserProfile[]>(() => {
+    if (localStorage.getItem('betfit_fresh_start_v1') !== 'true') return [];
     const saved = localStorage.getItem('betfit_users');
     return saved ? JSON.parse(saved) : INITIAL_USERS;
   });
 
-  const [currentUserId, setCurrentUserId] = useState<string>(() => {
-    return localStorage.getItem('betfit_active_user') || 'user-alex';
+  const [currentUserId, setCurrentUserId] = useState<string | null>(() => {
+    if (localStorage.getItem('betfit_fresh_start_v1') !== 'true') return null;
+    return localStorage.getItem('betfit_active_user') || null;
+  });
+
+  const [isSigningUp, setIsSigningUp] = useState<boolean>(() => {
+    // If no users exist, default to onboarding signup flow
+    if (localStorage.getItem('betfit_fresh_start_v1') !== 'true') return true;
+    const savedUsers = localStorage.getItem('betfit_users');
+    return !savedUsers || JSON.parse(savedUsers).length === 0;
   });
 
   const [betGroup, setBetGroup] = useState<BetGroup>(() => {
@@ -79,12 +94,7 @@ export function App() {
 
   const [activitiesMap, setActivitiesMap] = useState<Record<string, ActivityLog[]>>(() => {
     const saved = localStorage.getItem('betfit_activities');
-    return saved ? JSON.parse(saved) : { 'user-alex': INITIAL_TODAY_ACTIVITIES };
-  });
-
-  const [banterList, setBanterList] = useState<BanterItem[]>(() => {
-    const saved = localStorage.getItem('betfit_banter');
-    return saved ? JSON.parse(saved) : INITIAL_BANTER;
+    return saved ? JSON.parse(saved) : {};
   });
 
   const [activePage, setActivePage] = useState<string>('Today');
@@ -129,7 +139,11 @@ export function App() {
   }, [users]);
 
   useEffect(() => {
-    localStorage.setItem('betfit_active_user', currentUserId);
+    if (currentUserId) {
+      localStorage.setItem('betfit_active_user', currentUserId);
+    } else {
+      localStorage.removeItem('betfit_active_user');
+    }
   }, [currentUserId]);
 
   useEffect(() => {
@@ -144,26 +158,24 @@ export function App() {
     localStorage.setItem('betfit_activities', JSON.stringify(activitiesMap));
   }, [activitiesMap]);
 
-  useEffect(() => {
-    localStorage.setItem('betfit_onboarded', String(isOnboarded));
-  }, [isOnboarded]);
+  const currentUser = users.find((u) => u.id === currentUserId) || null;
+  const userWeighIns = currentUser ? weighInsMap[currentUser.id] || [] : [];
 
-  const currentUser = users.find((u) => u.id === currentUserId) || users[0];
-  const userWeighIns = weighInsMap[currentUser?.id] || [];
-
-  const userActivities =
-    activitiesMap[currentUser?.id] ||
-    (currentUser?.chosenDisciplines || []).map((d, i) => ({
-      id: `act-${currentUser?.id}-${d}-${i}`,
-      userId: currentUser?.id,
-      discipline: d,
-      date: '2026-11-03',
-      completed: false,
-      xpEarned: 0
-    }));
+  const userActivities = currentUser
+    ? activitiesMap[currentUser.id] ||
+      (currentUser.chosenDisciplines || []).map((d, i) => ({
+        id: `act-${currentUser.id}-${d}-${i}`,
+        userId: currentUser.id,
+        discipline: d,
+        date: '2026-11-03',
+        completed: false,
+        xpEarned: 0
+      }))
+    : [];
 
   // Toggle habit with verified streak logic
   const handleToggleActivity = (activityId: string, completed: boolean) => {
+    if (!currentUser) return;
     const todayDate = '2026-11-03';
 
     const updatedActivities = userActivities.map((act) => {
@@ -217,6 +229,8 @@ export function App() {
 
   // Save new weigh-in
   const handleSaveWeight = (newWeight: number, date: string, notes?: string) => {
+    if (!currentUser) return;
+
     const newRecord: WeighIn = {
       id: `w-${Date.now()}`,
       userId: currentUser.id,
@@ -248,6 +262,8 @@ export function App() {
 
   // Update chosen disciplines
   const handleUpdateDisciplines = (disciplines: DisciplineType[]) => {
+    if (!currentUser) return;
+
     setUsers((prev) =>
       prev.map((u) => {
         if (u.id === currentUser.id) {
@@ -279,8 +295,8 @@ export function App() {
     setToast('Habits updated.');
   };
 
-  // Finish Onboarding Flow
-  const handleFinishOnboarding = (profile: UserProfile, newBetGroup?: BetGroup) => {
+  // Finish Onboarding / Signup
+  const handleFinishSignup = (profile: UserProfile, newBetGroup?: BetGroup) => {
     setUsers((prev) => [profile, ...prev.filter((u) => u.id !== profile.id)]);
     setCurrentUserId(profile.id);
 
@@ -303,7 +319,7 @@ export function App() {
       userId: profile.id,
       date: '2026-11-03',
       weight: profile.startingWeight,
-      notes: 'Baseline check-in from onboarding'
+      notes: 'Baseline check-in from sign up'
     };
 
     setWeighInsMap((prev) => ({
@@ -315,9 +331,9 @@ export function App() {
       setBetGroup(newBetGroup);
     }
 
-    setIsOnboarded(true);
+    setIsSigningUp(false);
     setActivePage('Today');
-    setToast(`Welcome to BetFit Arena, ${profile.name.split(' ')[0]}!`);
+    setToast(`Welcome, ${profile.name.split(' ')[0]}!`);
   };
 
   // Join shared bet from link
@@ -352,9 +368,16 @@ export function App() {
       [profile.id]: [initialWeighIn]
     }));
 
-    // Remove query param from URL without reload
     window.history.replaceState({}, document.title, window.location.pathname);
+    setIsSigningUp(false);
     setToast(`Joined ${betGroup.title}!`);
+  };
+
+  // Log out
+  const handleLogout = () => {
+    setCurrentUserId(null);
+    setIsSigningUp(false);
+    setToast('Logged out.');
   };
 
   // Export Data JSON
@@ -381,30 +404,40 @@ export function App() {
   const handleResetData = () => {
     if (
       window.confirm(
-        'This will reset your local data and restore the initial participants and December showdown. Continue?'
+        'This will clear all local data and return to a completely fresh starting point. Continue?'
       )
     ) {
-      localStorage.removeItem('betfit_users');
-      localStorage.removeItem('betfit_active_user');
-      localStorage.removeItem('betfit_bet_group');
-      localStorage.removeItem('betfit_weigh_ins');
-      localStorage.removeItem('betfit_activities');
-      localStorage.removeItem('betfit_onboarded');
+      localStorage.clear();
       window.location.reload();
     }
   };
 
-  // If user is currently in Onboarding Flow (e.g. freshly unboarded or triggered manually)
-  if (!isOnboarded) {
+  // SCENARIO 1: User is signing up / adding new user
+  if (isSigningUp) {
     return (
       <OnboardingFlow
-        onFinish={handleFinishOnboarding}
-        onCancel={() => setIsOnboarded(true)}
+        onFinish={handleFinishSignup}
+        onCancel={users.length > 0 ? () => setIsSigningUp(false) : undefined}
         existingBet={betGroup}
       />
     );
   }
 
+  // SCENARIO 2: Not logged in (select profile or click sign up)
+  if (!currentUser) {
+    return (
+      <AuthScreen
+        existingUsers={users}
+        onSelectUser={(id) => setCurrentUserId(id)}
+        onStartSignup={() => setIsSigningUp(true)}
+        isDarkMode={theme === 'dark'}
+        onToggleTheme={toggleTheme}
+        betGroup={betGroup}
+      />
+    );
+  }
+
+  // SCENARIO 3: Logged in and viewing the app
   return (
     <AppLayout
       currentUser={currentUser}
@@ -413,7 +446,8 @@ export function App() {
       isDarkMode={theme === 'dark'}
       onToggleTheme={toggleTheme}
       onOpenProfile={() => setActivePage('Settings')}
-      onStartOnboarding={() => setIsOnboarded(false)}
+      onAddNewUser={() => setIsSigningUp(true)}
+      onLogout={handleLogout}
     >
       {/* Dynamic Tab Views */}
       {activePage === 'Today' && (
@@ -436,7 +470,7 @@ export function App() {
           currentUser={currentUser}
           allUsers={users}
           betGroup={betGroup}
-          banterList={banterList}
+          banterList={[]}
           onOpenShareModal={() => setIsShareBetOpen(true)}
           onOpenCreateBetModal={() => setIsCreateBetOpen(true)}
           onOpenEditBetModal={() => setIsEditBetOpen(true)}
@@ -474,7 +508,8 @@ export function App() {
             setCurrentUserId(id);
             setToast('Switched participant.');
           }}
-          onStartOnboarding={() => setIsOnboarded(false)}
+          onAddNewUser={() => setIsSigningUp(true)}
+          onLogout={handleLogout}
           onExportData={handleExportData}
           onResetData={handleResetData}
         />
