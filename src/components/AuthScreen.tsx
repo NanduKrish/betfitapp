@@ -2,6 +2,7 @@ import React from 'react';
 import { ArrowRight, UserPlus, LogIn, Trophy, Flame, Shield, Sun, Moon } from 'lucide-react';
 import { UserProfile, BetGroup } from '../types';
 import { Avatar } from './Avatar';
+import { LineDiagramBackground } from './LineDiagramBackground';
 
 interface AuthScreenProps {
   existingUsers: UserProfile[];
@@ -21,7 +22,8 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   betGroup
 }) => {
   return (
-    <div className="min-h-screen bg-[var(--bg)] flex flex-col">
+    <div className="min-h-screen bg-[var(--bg)] flex flex-col relative overflow-hidden">
+      <LineDiagramBackground variant="topographic" />
       {/* Top Bar */}
       <header className="h-16 border-b border-[var(--line)] bg-[var(--surface)] px-6 sm:px-12 flex items-center justify-between">
         <div className="brand">

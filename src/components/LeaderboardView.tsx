@@ -6,7 +6,9 @@ import {
   Flame,
   AlertCircle,
   Sliders,
-  Users
+  Users,
+  Layers,
+  ChevronDown
 } from 'lucide-react';
 import { UserProfile, BetGroup, BanterItem } from '../types';
 import { Avatar } from './Avatar';
@@ -21,10 +23,12 @@ interface LeaderboardViewProps {
   currentUser: UserProfile;
   allUsers: UserProfile[];
   betGroup: BetGroup;
+  allBets?: BetGroup[];
   banterList: BanterItem[];
   onOpenShareModal: () => void;
   onOpenCreateBetModal: () => void;
   onOpenEditBetModal: () => void;
+  onOpenBetSwitcher?: () => void;
   onSendBanter: (toUser: UserProfile, type: 'nudge' | 'cheer' | 'taunt') => void;
 }
 
@@ -32,10 +36,12 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
   currentUser,
   allUsers,
   betGroup,
+  allBets = [],
   banterList,
   onOpenShareModal,
   onOpenCreateBetModal,
   onOpenEditBetModal,
+  onOpenBetSwitcher,
   onSendBanter
 }) => {
   // Sort users fairly by % of goal achieved
@@ -57,20 +63,45 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
       {/* Responsive Page Header */}
       <div className="page-head">
         <div>
-          <div className="eyebrow">THE WAGER</div>
-          <h1>{betGroup.title}</h1>
+          <div className="flex items-center gap-2 flex-wrap mb-1">
+            <span className="eyebrow">THE WAGER</span>
+            {allBets.length > 1 && onOpenBetSwitcher && (
+              <button
+                onClick={onOpenBetSwitcher}
+                className="inline-flex items-center gap-1 text-xs font-semibold px-2 py-0.5 rounded-full bg-[var(--surface-subtle)] hover:bg-[var(--line)] text-[var(--muted)] hover:text-[var(--text)] border border-[var(--line)] transition"
+              >
+                <span>Wager {allBets.findIndex((b) => b.id === betGroup.id) + 1} of {allBets.length}</span>
+                <ChevronDown size={12} />
+              </button>
+            )}
+          </div>
+
+          <div className="flex items-center gap-2.5 flex-wrap">
+            <h1>{betGroup.title}</h1>
+            {onOpenBetSwitcher && (
+              <button
+                onClick={onOpenBetSwitcher}
+                className="btn-secondary text-xs h-7 px-2.5"
+                title="Switch active wager"
+              >
+                <Layers size={13} />
+                <span>My Bets ({Math.max(1, allBets.length)})</span>
+              </button>
+            )}
+          </div>
+
           <p>
             {betGroup.currency || '₹'}
-            {betGroup.potAmount} collective stakes in the vault. Target deadline: December 31, 2026.
+            {betGroup.potAmount} collective stakes in the vault. Target deadline: {betGroup.targetDeadline}.
           </p>
         </div>
 
         <div className="page-head-actions">
           <button className="btn-secondary" onClick={onOpenShareModal}>
-            <Share2 size={15} /> Invite
+            <Share2 size={15} /> <span>Invite</span>
           </button>
           <button className="btn-primary" onClick={onOpenCreateBetModal}>
-            <Plus size={15} /> New Bet
+            <Plus size={15} /> <span>New Bet</span>
           </button>
         </div>
       </div>
@@ -143,11 +174,11 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                 isMe ? 'border-[var(--green)]/60 bg-[var(--green-pale)]' : ''
               }`}
             >
-              <div className="flex flex-col items-center justify-center w-7 sm:w-8 text-center shrink-0 pt-1">
-                <span className="font-mono-num font-extrabold text-sm sm:text-base text-[var(--muted)]">
+              <div className="flex flex-col items-center justify-center w-6 sm:w-7 text-center shrink-0 pt-0.5">
+                <span className="font-mono-num font-extrabold text-xs sm:text-sm text-[var(--muted)]">
                   #{idx + 1}
                 </span>
-                {idx === 0 && <Trophy size={14} className="text-[var(--amber)] mt-1" />}
+                {idx === 0 && <Trophy size={13} className="text-[var(--amber)] mt-0.5" />}
               </div>
 
               <div className="goal-card-icon">
@@ -196,7 +227,7 @@ export const LeaderboardView: React.FC<LeaderboardViewProps> = ({
                   />
                 </div>
 
-                <div className="flex items-center justify-between text-xs text-[var(--muted)] mt-2 font-mono-num">
+                <div className="flex items-center justify-between gap-1.5 text-xs text-[var(--muted)] mt-2 font-mono-num flex-wrap">
                   <span>
                     {progress}% goal completed
                   </span>

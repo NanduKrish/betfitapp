@@ -12,12 +12,14 @@ import {
   AlertCircle,
   Sliders,
   Share2,
-  Users
+  Users,
+  Layers
 } from 'lucide-react';
 import { UserProfile, BetGroup, ActivityLog, WeighIn } from '../types';
 import { DISCIPLINES } from '../data/constants';
 import { DisciplineIcon } from './DisciplineIcon';
 import { Avatar } from './Avatar';
+import { LineDiagramBackground } from './LineDiagramBackground';
 import {
   calculateGoalProgress,
   calculateWeightDelta,
@@ -29,12 +31,14 @@ interface TodayViewProps {
   currentUser: UserProfile;
   allUsers: UserProfile[];
   betGroup: BetGroup;
+  allBets?: BetGroup[];
   todayActivities: ActivityLog[];
   weighIns: WeighIn[];
   onToggleActivity: (activityId: string, completed: boolean) => void;
   onOpenWeighInModal: () => void;
   onOpenDisciplineModal: () => void;
   onOpenShareModal: () => void;
+  onOpenBetSwitcher?: () => void;
   onNavigateToTab: (tab: string) => void;
 }
 
@@ -42,12 +46,14 @@ export const TodayView: React.FC<TodayViewProps> = ({
   currentUser,
   allUsers,
   betGroup,
+  allBets = [],
   todayActivities,
   weighIns,
   onToggleActivity,
   onOpenWeighInModal,
   onOpenDisciplineModal,
   onOpenShareModal,
+  onOpenBetSwitcher,
   onNavigateToTab
 }) => {
   const firstName = currentUser.name.split(' ')[0] || 'Friend';
@@ -112,56 +118,105 @@ export const TodayView: React.FC<TodayViewProps> = ({
     return pB - pA;
   });
 
+  // Circular progress math
+  const ringRadius = 18;
+  const ringCircumference = 2 * Math.PI * ringRadius;
+  const strokeOffset = ringCircumference - (habitCompletionPct / 100) * ringCircumference;
+
   return (
     <div className="space-y-6">
-      {/* 1. Cohesive, Production-Grade Page Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-2 border-b border-[var(--line)]">
-        <div>
-          <span className="eyebrow block">
-            YOUR ARENA
-          </span>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--text)] tracking-tight font-sans">
-            {greeting}.
-          </h1>
-          <div className="flex flex-wrap items-center gap-2.5 mt-2">
-            <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-[var(--amber-pale)] text-[var(--amber)] border border-[var(--line)] font-mono-num">
-              <Flame size={13} className="fill-[var(--amber)] text-[var(--amber)]" />
-              {currentUser.streakCount} Day Streak
-            </span>
-            <span className="text-xs text-[var(--muted)]">
-              {isDayFullyComplete ? '· All habits completed today' : '· Complete all to advance'}
-            </span>
-          </div>
-        </div>
+      {/* 1. ELEVATED HERO HEADER WITH FAINT LINE DIAGRAM */}
+      <div className="relative overflow-hidden rounded-2xl p-5 sm:p-6 bg-[var(--surface)] border border-[var(--line)] shadow-xs">
+        <LineDiagramBackground variant="topographic" />
 
-        <button className="btn-primary self-start sm:self-center shrink-0" onClick={onOpenWeighInModal}>
-          <Plus size={15} />
-          <span>Log weight</span>
-        </button>
-      </div>
-
-      {/* 2. HERO: TODAY'S HABITS (CALM, CLEAN, ELEVATED DESIGN) */}
-      <div className="clean-card rounded-2xl p-5 sm:p-6 bg-[var(--surface)] border border-[var(--line)] shadow-xs space-y-4">
-        {/* Habit Card Header */}
-        <div className="flex items-start justify-between gap-4">
+        <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <div className="flex flex-wrap items-center gap-2">
-              <h2 className="text-base sm:text-lg font-bold text-[var(--text)] font-sans">
-                Today's Habits
-              </h2>
-              <span
-                className={`text-xs font-semibold px-2.5 py-0.5 rounded-full border border-[var(--line)] ${
-                  isDayFullyComplete
-                    ? 'bg-[var(--green-pale)] text-[var(--green)]'
-                    : 'bg-[var(--surface-subtle)] text-[var(--muted)]'
-                }`}
-              >
-                {isDayFullyComplete ? 'Streak secured today' : 'Complete all to build streak'}
+            <div className="flex items-center gap-2">
+              <span className="eyebrow block">YOUR ARENA</span>
+              <span className="w-1.5 h-1.5 rounded-full bg-[var(--green)] animate-pulse" />
+            </div>
+
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--text)] tracking-tight font-sans mt-0.5">
+              {greeting}.
+            </h1>
+
+            <div className="flex flex-wrap items-center gap-2.5 mt-2.5">
+              <span className="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-[var(--amber-pale)] text-[var(--amber)] border border-[var(--line)] font-mono-num shadow-2xs">
+                <Flame size={13} className="fill-[var(--amber)] text-[var(--amber)]" />
+                {currentUser.streakCount} Day Streak
+              </span>
+              <span className="text-xs text-[var(--muted)]">
+                {isDayFullyComplete ? '· All habits completed today' : '· Complete all to advance'}
               </span>
             </div>
-            <p className="text-xs text-[var(--muted)] mt-1">
-              {completedCount} of {todayActivities.length} habits completed ({habitCompletionPct}%)
-            </p>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button className="btn-primary" onClick={onOpenWeighInModal}>
+              <Plus size={15} />
+              <span>Log weight</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 2. HERO: TODAY'S HABITS WITH ATTRACTIVE WAVE LINE BACKGROUND & VISUAL METER */}
+      <div className="relative overflow-hidden clean-card rounded-2xl p-5 sm:p-6 bg-[var(--surface)] border border-[var(--line)] shadow-xs space-y-4">
+        <LineDiagramBackground variant="waves" />
+
+        {/* Habit Card Header with Visual Progress Ring */}
+        <div className="relative z-10 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3.5 min-w-0">
+            {/* Circular Ring Progress Meter */}
+            <div className="relative w-12 h-12 flex items-center justify-center shrink-0">
+              <svg className="w-12 h-12 -rotate-90" viewBox="0 0 44 44">
+                <circle
+                  cx="22"
+                  cy="22"
+                  r={ringRadius}
+                  fill="none"
+                  stroke="var(--line)"
+                  strokeWidth="3.5"
+                />
+                <circle
+                  cx="22"
+                  cy="22"
+                  r={ringRadius}
+                  fill="none"
+                  stroke={isDayFullyComplete ? 'var(--green)' : 'var(--green)'}
+                  strokeWidth="3.5"
+                  strokeDasharray={ringCircumference}
+                  strokeDashoffset={strokeOffset}
+                  strokeLinecap="round"
+                  className="transition-all duration-500 ease-out"
+                />
+              </svg>
+              <span className="absolute font-mono-num text-[11px] font-bold text-[var(--text)]">
+                {habitCompletionPct}%
+              </span>
+            </div>
+
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 className="text-base sm:text-lg font-bold text-[var(--text)] font-sans truncate">
+                  Today's Habits
+                </h2>
+                <span
+                  className={`text-xs font-semibold px-2 py-0.5 rounded-full border border-[var(--line)] ${
+                    isDayFullyComplete
+                      ? 'bg-[var(--green-pale)] text-[var(--green)]'
+                      : 'bg-[var(--surface-subtle)] text-[var(--muted)]'
+                  }`}
+                >
+                  {isDayFullyComplete ? 'Streak secured' : `${completedCount}/${todayActivities.length} done`}
+                </span>
+              </div>
+              <p className="text-xs text-[var(--muted)] mt-0.5">
+                {isDayFullyComplete
+                  ? 'All chosen habits done for today. Keep the momentum going.'
+                  : 'Check off each activity to extend your consecutive streak.'}
+              </p>
+            </div>
           </div>
 
           <button
@@ -174,7 +229,7 @@ export const TodayView: React.FC<TodayViewProps> = ({
         </div>
 
         {/* Dynamic Habit Completion Progress Bar */}
-        <div className="w-full bg-[var(--surface-subtle)] rounded-full h-2 overflow-hidden border border-[var(--line)]">
+        <div className="relative z-10 w-full bg-[var(--surface-subtle)] rounded-full h-2 overflow-hidden border border-[var(--line)]">
           <div
             className="h-full bg-[var(--green)] rounded-full transition-all duration-300"
             style={{ width: `${habitCompletionPct}%` }}
@@ -296,25 +351,39 @@ export const TodayView: React.FC<TodayViewProps> = ({
         </div>
 
         {/* Wager Card */}
-        <div className="info-card">
-          <div className="info-top">
-            <span>The Wager Vault</span>
+        <div className="info-card relative overflow-hidden">
+          <LineDiagramBackground variant="waves" />
+
+          <div className="relative z-10 info-top">
+            <div className="flex items-center gap-2">
+              <span>The Wager Vault</span>
+              {allBets.length > 1 && onOpenBetSwitcher && (
+                <button
+                  onClick={onOpenBetSwitcher}
+                  className="text-xs font-semibold text-[var(--green)] hover:underline flex items-center gap-0.5"
+                  title="Switch active bet"
+                >
+                  <Layers size={11} />
+                  <span>Switch</span>
+                </button>
+              )}
+            </div>
             <Trophy size={15} />
           </div>
 
-          <strong className="goal-name mt-3">{betGroup.title}</strong>
+          <strong className="relative z-10 goal-name mt-3 truncate">{betGroup.title}</strong>
 
-          <p className="text-xs text-[var(--muted)]">
+          <p className="relative z-10 text-xs text-[var(--muted)]">
             {betGroup.currency || '₹'}
-            {betGroup.potAmount} Pot · {pace.daysLeft} days remaining until Dec 31
+            {betGroup.potAmount} Pot · {pace.daysLeft} days remaining until {betGroup.targetDeadline}
           </p>
 
-          <div className="flex items-center justify-between text-xs text-[var(--muted)] mt-1.5 font-mono-num">
+          <div className="relative z-10 flex items-center justify-between text-xs text-[var(--muted)] mt-1.5 font-mono-num">
             <span>Goal progress: {goalProgress}%</span>
             <span>Target rate: {pace.pacePerWeek} kg/wk</span>
           </div>
 
-          <div className="flex items-center justify-between mt-auto pt-4 border-t border-[var(--line)]">
+          <div className="relative z-10 flex items-center justify-between mt-auto pt-4 border-t border-[var(--line)]">
             <button className="card-link" onClick={() => onNavigateToTab('The Bet')}>
               <span>View standings</span>
               <ChevronRight size={13} />

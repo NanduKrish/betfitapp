@@ -1,5 +1,5 @@
 import React from 'react';
-import { Download, Trash2, UserPlus, LogOut, Check, ArrowRight } from 'lucide-react';
+import { Download, Trash2, UserPlus, LogOut, Check, ArrowRight, Trophy, Plus, Sliders, Calendar } from 'lucide-react';
 import { UserProfile, BetGroup } from '../types';
 import { Avatar } from './Avatar';
 
@@ -7,9 +7,14 @@ interface SettingsViewProps {
   currentUser: UserProfile;
   allUsers: UserProfile[];
   betGroup: BetGroup;
+  allBets?: BetGroup[];
   onSwitchUser: (userId: string) => void;
   onAddNewUser: () => void;
   onDeleteUser: (userId: string) => void;
+  onSelectBet?: (betId: string) => void;
+  onOpenCreateBet?: () => void;
+  onOpenEditBet?: () => void;
+  onDeleteBet?: (betId: string) => void;
   onLogout: () => void;
   onExportData: () => void;
   onResetData: () => void;
@@ -19,9 +24,14 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
   currentUser,
   allUsers,
   betGroup,
+  allBets = [],
   onSwitchUser,
   onAddNewUser,
   onDeleteUser,
+  onSelectBet,
+  onOpenCreateBet,
+  onOpenEditBet,
+  onDeleteBet,
   onLogout,
   onExportData,
   onResetData
@@ -119,7 +129,96 @@ export const SettingsView: React.FC<SettingsViewProps> = ({
         })}
       </div>
 
-      {/* 2. Account Session */}
+      {/* 2. Manage Wagers & Showdowns */}
+      <div className="section-title recent-title">
+        <div>
+          <h2>Wagers & Showdowns</h2>
+          <span>{allBets.length} {allBets.length === 1 ? 'wager' : 'wagers'} configured</span>
+        </div>
+        {onOpenCreateBet && (
+          <button className="btn-secondary text-xs h-8 px-2.5" onClick={onOpenCreateBet}>
+            <Plus size={14} /> <span>New Bet</span>
+          </button>
+        )}
+      </div>
+
+      <div className="space-y-2.5">
+        {allBets.map((b) => {
+          const isActive = b.id === betGroup.id;
+          return (
+            <div
+              key={b.id}
+              className={`clean-card rounded-xl p-4 bg-[var(--surface)] border flex items-center justify-between gap-3 flex-wrap transition ${
+                isActive ? 'border-[var(--green)]/60 bg-[var(--green-pale)]' : 'border-[var(--line)]'
+              }`}
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div
+                  className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${
+                    isActive ? 'bg-[var(--green)] text-black font-bold' : 'bg-[var(--surface-subtle)] text-[var(--muted)]'
+                  }`}
+                >
+                  <Trophy size={16} />
+                </div>
+
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <b className="text-xs sm:text-sm text-[var(--text)] truncate">{b.title}</b>
+                    {isActive && (
+                      <span className="text-xs font-semibold text-[var(--green)] bg-[var(--surface)] border border-[var(--line)] px-1.5 py-0.5 rounded">
+                        ACTIVE
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs text-[var(--muted)] mt-0.5 font-mono-num">
+                    {b.currency || '₹'}{b.potAmount} Pot · Deadline: {b.targetDeadline}
+                    {b.forfeitDescription ? ` · ${b.forfeitDescription}` : ''}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2 ml-auto">
+                {isActive && onOpenEditBet && (
+                  <button
+                    className="btn-secondary text-xs h-8 px-2.5"
+                    onClick={onOpenEditBet}
+                  >
+                    <Sliders size={13} />
+                    <span>Edit</span>
+                  </button>
+                )}
+
+                {!isActive && onSelectBet && (
+                  <button
+                    className="btn-secondary text-xs h-8 px-2.5"
+                    onClick={() => onSelectBet(b.id)}
+                  >
+                    <span>Switch</span>
+                    <ArrowRight size={13} />
+                  </button>
+                )}
+
+                {allBets.length > 1 && onDeleteBet && (
+                  <button
+                    className="btn-danger text-xs h-8 px-2.5"
+                    onClick={() => {
+                      if (window.confirm(`Are you sure you want to delete wager "${b.title}"?`)) {
+                        onDeleteBet(b.id);
+                      }
+                    }}
+                    title="Delete wager"
+                  >
+                    <Trash2 size={13} />
+                    <span>Delete</span>
+                  </button>
+                )}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* 3. Account Session */}
       <div className="section-title recent-title">
         <h2>Session & Account</h2>
         <span>Current: {currentUser.name}</span>

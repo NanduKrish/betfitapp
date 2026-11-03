@@ -27,6 +27,7 @@ import { CreateBetModal } from './components/CreateBetModal';
 import { ShareBetModal } from './components/ShareBetModal';
 import { JoinBetModal } from './components/JoinBetModal';
 import { EditBetModal } from './components/EditBetModal';
+import { BetSwitcherModal } from './components/BetSwitcherModal';
 import { Check } from 'lucide-react';
 
 export function App() {
@@ -82,10 +83,31 @@ export function App() {
     return !savedUsers || JSON.parse(savedUsers).length === 0;
   });
 
-  const [betGroup, setBetGroup] = useState<BetGroup>(() => {
-    const saved = localStorage.getItem('betfit_bet_group');
-    return saved ? JSON.parse(saved) : INITIAL_BET_GROUP;
+  // Multi-Bet Showdowns State
+  const [allBets, setAllBets] = useState<BetGroup[]>(() => {
+    const savedAll = localStorage.getItem('betfit_all_bets');
+    if (savedAll) {
+      try {
+        const parsed = JSON.parse(savedAll);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      } catch {}
+    }
+    const savedSingle = localStorage.getItem('betfit_bet_group');
+    if (savedSingle) {
+      try {
+        return [JSON.parse(savedSingle)];
+      } catch {}
+    }
+    return [INITIAL_BET_GROUP];
   });
+
+  const [activeBetId, setActiveBetId] = useState<string>(() => {
+    const savedId = localStorage.getItem('betfit_active_bet_id');
+    if (savedId) return savedId;
+    return allBets[0]?.id || INITIAL_BET_GROUP.id;
+  });
+
+  const betGroup = allBets.find((b) => b.id === activeBetId) || allBets[0] || INITIAL_BET_GROUP;
 
   const [weighInsMap, setWeighInsMap] = useState<Record<string, WeighIn[]>>(() => {
     const saved = localStorage.getItem('betfit_weigh_ins');
@@ -106,6 +128,7 @@ export function App() {
   const [isCreateBetOpen, setIsCreateBetOpen] = useState(false);
   const [isShareBetOpen, setIsShareBetOpen] = useState(false);
   const [isEditBetOpen, setIsEditBetOpen] = useState(false);
+  const [isBetSwitcherOpen, setIsBetSwitcherOpen] = useState(false);
   const [isJoinBetOpen, setIsJoinBetOpen] = useState(false);
   const [incomingBet, setIncomingBet] = useState<BetGroup | null>(null);
 
@@ -147,8 +170,13 @@ export function App() {
   }, [currentUserId]);
 
   useEffect(() => {
+    localStorage.setItem('betfit_all_bets', JSON.stringify(allBets));
+  }, [allBets]);
+
+  useEffect(() => {
+    localStorage.setItem('betfit_active_bet_id', activeBetId);
     localStorage.setItem('betfit_bet_group', JSON.stringify(betGroup));
-  }, [betGroup]);
+  }, [activeBetId, betGroup]);
 
   useEffect(() => {
     localStorage.setItem('betfit_weigh_ins', JSON.stringify(weighInsMap));
@@ -328,7 +356,8 @@ export function App() {
     }));
 
     if (newBetGroup) {
-      setBetGroup(newBetGroup);
+      setAllBets((prev) => [newBetGroup, ...prev.filter((b) => b.id !== newBetGroup.id)]);
+      setActiveBetId(newBetGroup.id);
     }
 
     setIsSigningUp(false);
@@ -371,6 +400,37 @@ export function App() {
     window.history.replaceState({}, document.title, window.location.pathname);
     setIsSigningUp(false);
     setToast(`Joined ${betGroup.title}!`);
+  };
+
+  // Bet Handlers (Create, Switch, Edit, Delete)
+  const handleCreateBet = (newBet: BetGroup) => {
+    setAllBets((prev) => [newBet, ...prev.filter((b) => b.id !== newBet.id)]);
+    setActiveBetId(newBet.id);
+    setToast(`Created & switched to "${newBet.title}"`);
+  };
+
+  const handleUpdateBet = (updated: BetGroup) => {
+    setAllBets((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
+    setToast(`Updated wager "${updated.title}"`);
+  };
+
+  const handleSelectBet = (betId: string) => {
+    setActiveBetId(betId);
+    const target = allBets.find((b) => b.id === betId);
+    setToast(`Switched active wager to "${target?.title || 'Wager'}"`);
+  };
+
+  const handleDeleteBet = (betId: string) => {
+    if (allBets.length <= 1) {
+      setToast('You must keep at least one active wager.');
+      return;
+    }
+    const remaining = allBets.filter((b) => b.id !== betId);
+    setAllBets(remaining);
+    if (activeBetId === betId) {
+      setActiveBetId(remaining[0].id);
+    }
+    setToast('Wager deleted.');
   };
 
   // Delete user profile
@@ -486,12 +546,14 @@ export function App() {
           currentUser={currentUser}
           allUsers={users}
           betGroup={betGroup}
+          allBets={allBets}
           todayActivities={userActivities}
           weighIns={userWeighIns}
           onToggleActivity={handleToggleActivity}
           onOpenWeighInModal={() => setIsWeighInOpen(true)}
           onOpenDisciplineModal={() => setIsDisciplineOpen(true)}
           onOpenShareModal={() => setIsShareBetOpen(true)}
+          onOpenBetSwitcher={() => setIsBetSwitcherOpen(true)}
           onNavigateToTab={setActivePage}
         />
       )}
@@ -501,10 +563,12 @@ export function App() {
           currentUser={currentUser}
           allUsers={users}
           betGroup={betGroup}
+          allBets={allBets}
           banterList={[]}
           onOpenShareModal={() => setIsShareBetOpen(true)}
           onOpenCreateBetModal={() => setIsCreateBetOpen(true)}
           onOpenEditBetModal={() => setIsEditBetOpen(true)}
+          onOpenBetSwitcher={() => setIsBetSwitcherOpen(true)}
           onSendBanter={(toUser, type) => {
             setToast(`Sent ${type} to ${toUser.name}`);
           }}
@@ -535,12 +599,17 @@ export function App() {
           currentUser={currentUser}
           allUsers={users}
           betGroup={betGroup}
+          allBets={allBets}
           onSwitchUser={(id) => {
             setCurrentUserId(id);
             setToast('Switched participant.');
           }}
           onAddNewUser={() => setIsSigningUp(true)}
           onDeleteUser={handleDeleteUser}
+          onSelectBet={handleSelectBet}
+          onOpenCreateBet={() => setIsCreateBetOpen(true)}
+          onOpenEditBet={() => setIsEditBetOpen(true)}
+          onDeleteBet={handleDeleteBet}
           onLogout={handleLogout}
           onExportData={handleExportData}
           onResetData={handleResetData}
@@ -566,10 +635,7 @@ export function App() {
         isOpen={isCreateBetOpen}
         onClose={() => setIsCreateBetOpen(false)}
         currentUserName={currentUser.name}
-        onCreateBet={(bet) => {
-          setBetGroup(bet);
-          setToast(`Created new bet: ${bet.title}`);
-        }}
+        onCreateBet={handleCreateBet}
       />
 
       <ShareBetModal
@@ -582,10 +648,17 @@ export function App() {
         isOpen={isEditBetOpen}
         onClose={() => setIsEditBetOpen(false)}
         betGroup={betGroup}
-        onSave={(updated) => {
-          setBetGroup(updated);
-          setToast('Wager updated.');
-        }}
+        onSave={handleUpdateBet}
+      />
+
+      <BetSwitcherModal
+        isOpen={isBetSwitcherOpen}
+        onClose={() => setIsBetSwitcherOpen(false)}
+        allBets={allBets}
+        activeBetId={activeBetId}
+        onSelectBet={handleSelectBet}
+        onOpenCreateBet={() => setIsCreateBetOpen(true)}
+        onDeleteBet={handleDeleteBet}
       />
 
       {incomingBet && (
