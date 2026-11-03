@@ -1,6 +1,14 @@
 # BetFit Arena — The December Showdown ⚔️
 
+[![Live Production](https://img.shields.io/badge/Production-betfitapp.vercel.app-10b981?style=flat-square)](https://betfitapp.vercel.app)
+[![Database](https://img.shields.io/badge/Database-Supabase%20PostgreSQL-3ecf8e?style=flat-square)](https://supabase.com)
+[![CI/CD](https://img.shields.io/badge/Auto--Deploy-Vercel%20%2B%20GitHub-black?style=flat-square)](https://github.com/NanduKrish/betfitapp)
+
+- **Live URL**: [https://betfitapp.vercel.app](https://betfitapp.vercel.app)
+- **GitHub Repository**: [https://github.com/NanduKrish/betfitapp](https://github.com/NanduKrish/betfitapp)
+
 A high-stakes, gamified social health tracking application designed for friend groups competing in a target-date weight loss bet.
+
 
 ## ✨ Key Features
 
