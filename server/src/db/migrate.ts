@@ -4,10 +4,15 @@ import { fileURLToPath } from 'url';
 import pg from 'pg';
 import dotenv from 'dotenv';
 
-dotenv.config();
-
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
+// Load root .env first, then server .env
+const rootEnv = path.resolve(__dirname, '../../../.env');
+const serverEnv = path.resolve(__dirname, '../../.env');
+if (fs.existsSync(rootEnv)) dotenv.config({ path: rootEnv });
+if (fs.existsSync(serverEnv)) dotenv.config({ path: serverEnv });
+
 
 async function runMigration() {
   const connectionString = process.env.DATABASE_URL;
