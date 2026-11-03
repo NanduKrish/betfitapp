@@ -513,7 +513,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({
         </div>
 
         <p className="onboard-foot">
-          Your data is stored locally in this browser. You can share your bet link with friends anytime.
+          Your profile, habits, and wager are backed up in real time on BetFit Cloud (Supabase PostgreSQL).
         </p>
       </div>
     </div>

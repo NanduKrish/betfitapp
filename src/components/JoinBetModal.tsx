@@ -18,6 +18,7 @@ export const JoinBetModal: React.FC<JoinBetModalProps> = ({
   if (!isOpen) return null;
 
   const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
   const [goalType, setGoalType] = useState<GoalType>('loss');
   const [unit, setUnit] = useState<'kg' | 'lbs'>('kg');
   const [startingWeight, setStartingWeight] = useState('80.0');
@@ -65,7 +66,8 @@ export const JoinBetModal: React.FC<JoinBetModalProps> = ({
       goalType,
       chosenDisciplines: ['gym', 'swimming', 'diet'],
       streakCount: 0,
-      streakShields: 1
+      streakShields: 1,
+      phone: phone.trim() || undefined,
     };
 
     onJoinBet(newParticipant);
@@ -114,6 +116,16 @@ export const JoinBetModal: React.FC<JoinBetModalProps> = ({
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
+            />
+          </label>
+
+          <label className="field">
+            <span>Mobile Number (Optional - for cloud OTP login)</span>
+            <input
+              type="tel"
+              placeholder="+91 98765 43210"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
             />
           </label>
 

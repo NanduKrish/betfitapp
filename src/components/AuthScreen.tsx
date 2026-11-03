@@ -1,13 +1,10 @@
 import React, { useState } from 'react';
-import { ArrowRight, UserPlus, LogIn, Trophy, Flame, Shield, Sun, Moon, Phone } from 'lucide-react';
+import { ArrowRight, UserPlus, Trophy, Flame, Shield, Sun, Moon, Phone } from 'lucide-react';
 import { UserProfile, BetGroup } from '../types';
-import { Avatar } from './Avatar';
 import { LineDiagramBackground } from './LineDiagramBackground';
 import { PhoneOtpModal } from './PhoneOtpModal';
 
 interface AuthScreenProps {
-  existingUsers: UserProfile[];
-  onSelectUser: (userId: string) => void;
   onStartSignup: () => void;
   onOtpLoginSuccess?: (profile: UserProfile, token: string) => void;
   isDarkMode: boolean;
@@ -16,8 +13,6 @@ interface AuthScreenProps {
 }
 
 export const AuthScreen: React.FC<AuthScreenProps> = ({
-  existingUsers,
-  onSelectUser,
   onStartSignup,
   onOtpLoginSuccess,
   isDarkMode,
@@ -60,69 +55,38 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             </h1>
 
             <p className="text-xs sm:text-sm text-[var(--muted)] leading-relaxed max-w-sm mx-auto">
-              Track daily habits, bet with friends on your target weight by December 31, and stay accountable with skin in the game.
+              Track daily habits, bet with friends on your target weight, and stay accountable with skin in the game.
             </p>
           </div>
 
-          {/* If users already exist on this device: Offer Quick Login */}
-          {existingUsers.length > 0 && (
-            <div className="clean-card rounded-2xl p-5 bg-[var(--surface)] border border-[var(--line)] space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[var(--text)] uppercase tracking-wider">
-                  Select your profile
-                </span>
-                <span className="text-xs text-[var(--muted)]">Saved locally</span>
-              </div>
-
-              <div className="space-y-2">
-                {existingUsers.map((u) => (
-                  <button
-                    key={u.id}
-                    onClick={() => onSelectUser(u.id)}
-                    className="w-full flex items-center justify-between p-3 rounded-xl border border-[var(--line)] hover:border-[var(--green)] hover:bg-[var(--surface-subtle)] transition text-left group"
-                  >
-                    <div className="flex items-center gap-3">
-                      <Avatar initials={u.avatarInitials} colorClass={u.avatarColor} size="md" />
-                      <div>
-                        <b className="text-xs sm:text-sm text-[var(--text)] block font-semibold">{u.name}</b>
-                        <small className="text-xs text-[var(--muted)]">
-                          {u.goalType === 'gain' ? 'Bulk' : 'Cut'} · {u.currentWeight}kg (Target: {u.targetWeight}kg)
-                        </small>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-1 text-xs font-semibold text-[var(--green)] group-hover:translate-x-0.5 transition-transform">
-                      <span>Log In</span>
-                      <ArrowRight size={14} />
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Primary Action: Sign Up / Create New Profile */}
-          <div className="space-y-2.5 text-center">
-            <button
-              onClick={onStartSignup}
-              className="btn-primary w-full h-12 text-xs font-semibold rounded-xl shadow-xs flex items-center justify-center gap-2"
-            >
-              <UserPlus size={16} />
-              <span>{existingUsers.length > 0 ? 'Create another profile' : 'Get started (Sign up)'}</span>
-              <ArrowRight size={16} />
-            </button>
-
+          {/* Primary Action Card */}
+          <div className="clean-card rounded-2xl p-6 bg-[var(--surface)] border border-[var(--line)] space-y-3.5 shadow-sm">
             <button
               type="button"
               onClick={() => setIsOtpOpen(true)}
-              className="btn-secondary w-full h-11 text-xs font-semibold rounded-xl flex items-center justify-center gap-2 border-[var(--line)]"
+              className="btn-primary w-full h-12 text-xs sm:text-sm font-semibold rounded-xl flex items-center justify-center gap-2 shadow-sm"
             >
-              <Phone size={15} className="text-[var(--green)]" />
-              <span>Sign in with Phone OTP (SMS / WhatsApp)</span>
+              <Phone size={16} />
+              <span>Sign in with Phone Number (OTP)</span>
+              <ArrowRight size={16} />
             </button>
 
-            <p className="text-xs text-[var(--muted)] pt-1">
-              Takes 60 seconds to configure your starting weight, target goal, and habits.
+            <div className="relative flex py-1 items-center">
+              <div className="flex-grow border-t border-[var(--line)]"></div>
+              <span className="flex-shrink mx-3 text-xs text-[var(--muted)] uppercase tracking-wider font-semibold">Or</span>
+              <div className="flex-grow border-t border-[var(--line)]"></div>
+            </div>
+
+            <button
+              onClick={onStartSignup}
+              className="btn-secondary w-full h-11 text-xs font-semibold rounded-xl flex items-center justify-center gap-2 border-[var(--line)] hover:border-[var(--green)] transition"
+            >
+              <UserPlus size={15} className="text-[var(--green)]" />
+              <span>Create New Account (60s setup)</span>
+            </button>
+
+            <p className="text-[11px] text-[var(--muted)] text-center pt-1">
+              Your account and active showdowns are safely preserved in the cloud database.
             </p>
           </div>
 
@@ -131,7 +95,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             <div className="p-2 space-y-1">
               <Flame size={16} className="mx-auto text-[var(--green)]" />
               <b className="text-xs text-[var(--text)] block font-semibold">Habit Streaks</b>
-              <span className="text-xs text-[var(--muted)] block">Complete all daily</span>
+              <span className="text-xs text-[var(--muted)] block">Daily disciplines</span>
             </div>
 
             <div className="p-2 space-y-1">
@@ -143,7 +107,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
             <div className="p-2 space-y-1">
               <Shield size={16} className="mx-auto text-[var(--green)]" />
               <b className="text-xs text-[var(--text)] block font-semibold">Verified Cloud</b>
-              <span className="text-xs text-[var(--muted)] block">Real-time sync</span>
+              <span className="text-xs text-[var(--muted)] block">Supabase Postgres</span>
             </div>
           </div>
         </div>
@@ -155,12 +119,9 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
         onLoginSuccess={(profile, token) => {
           if (onOtpLoginSuccess) {
             onOtpLoginSuccess(profile, token);
-          } else {
-            onSelectUser(profile.id);
           }
         }}
       />
     </div>
-
   );
 };

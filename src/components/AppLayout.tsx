@@ -10,8 +10,7 @@ import {
   ChevronRight,
   Sun,
   Moon,
-  Info,
-  UserPlus,
+  Shield,
   LogOut
 } from 'lucide-react';
 import { UserProfile } from '../types';
@@ -23,7 +22,6 @@ interface AppLayoutProps {
   isDarkMode: boolean;
   onToggleTheme: () => void;
   onOpenProfile: () => void;
-  onAddNewUser: () => void;
   onLogout: () => void;
   children: React.ReactNode;
 }
@@ -35,7 +33,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
   isDarkMode,
   onToggleTheme,
   onOpenProfile,
-  onAddNewUser,
   onLogout,
   children
 }) => {
@@ -101,17 +98,6 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           <button
             className="side-link"
             onClick={() => {
-              onAddNewUser();
-              setMobileMenuOpen(false);
-            }}
-          >
-            <UserPlus size={16} />
-            <span>Add new user</span>
-          </button>
-
-          <button
-            className="side-link"
-            onClick={() => {
               onLogout();
               setMobileMenuOpen(false);
             }}
@@ -129,8 +115,8 @@ export const AppLayout: React.FC<AppLayoutProps> = ({
           </button>
 
           <div className="privacy-note">
-            <Info size={14} />
-            <span>Your data is stored in this browser.</span>
+            <Shield size={14} className="text-[var(--green)]" />
+            <span>Secured by BetFit Cloud (Supabase)</span>
           </div>
         </div>
       </aside>

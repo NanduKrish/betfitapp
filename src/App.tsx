@@ -60,7 +60,19 @@ export function App() {
   // User accounts & session
   const [users, setUsers] = useState<UserProfile[]>(() => {
     const saved = localStorage.getItem('betfit_users');
-    return saved ? JSON.parse(saved) : [];
+    if (!saved) return [];
+    try {
+      const parsed = JSON.parse(saved);
+      if (!Array.isArray(parsed)) return [];
+      const seen = new Set<string>();
+      return parsed.filter((u) => {
+        if (!u.id || seen.has(u.id)) return false;
+        seen.add(u.id);
+        return true;
+      });
+    } catch {
+      return [];
+    }
   });
 
   const [currentUserId, setCurrentUserId] = useState<string | null>(() => {
@@ -541,14 +553,15 @@ export function App() {
       // 1. Authenticate joining user if not logged in
       let userToken = localStorage.getItem('betfit_auth_token');
       if (!userToken) {
-        const dummyPhone = `+9197${Date.now().toString().slice(-8)}`;
-        const authRes = await authApi.verifyOtp(dummyPhone, '123456', profile.name);
+        const phoneToUse = profile.phone || `+9197${Date.now().toString().slice(-8)}`;
+        const authRes = await authApi.verifyOtp(phoneToUse, '123456', profile.name);
         userToken = authRes.token;
         profile.id = authRes.user.id;
       }
 
       // 2. Call cloud API to join wager showdown
-      await wagerApi.joinWager(incomingBet.id, {
+      const joinedWagerId = incomingBet.id;
+      await wagerApi.joinWager(joinedWagerId, {
         goalType: profile.goalType,
         startingWeight: profile.startingWeight,
         targetWeight: profile.targetWeight,
@@ -557,7 +570,7 @@ export function App() {
 
       // 3. Log initial baseline weigh-in
       await weighInApi.logWeighIn({
-        wagerId: incomingBet.id,
+        wagerId: joinedWagerId,
         weight: profile.startingWeight,
         notes: 'Baseline check-in from join link',
       });
@@ -571,6 +584,8 @@ export function App() {
 
       // Reload cloud data: User A and Friend B now both appear on the leaderboard!
       await loadCloudSession();
+      setActiveBetId(joinedWagerId);
+      await refreshLeaderboard(joinedWagerId);
     } catch (err: any) {
       console.error('Error joining wager in cloud:', err);
       setToast(err.message || 'Error joining wager');
@@ -721,14 +736,12 @@ export function App() {
   if (!currentUser) {
     return (
       <AuthScreen
-        existingUsers={users}
-        onSelectUser={(id) => setCurrentUserId(id)}
         onStartSignup={() => setIsSigningUp(true)}
         onOtpLoginSuccess={(profile, token) => {
           setUsers((prev) => {
-            const existing = prev.find((u) => u.id === profile.id || u.name === profile.name);
+            const existing = prev.find((u) => u.id === profile.id);
             if (existing) return prev;
-            return [...prev, profile];
+            return [profile, ...prev];
           });
           setCurrentUserId(profile.id);
           setToast(`Verified & logged in as ${profile.name}`);
@@ -750,7 +763,6 @@ export function App() {
       isDarkMode={theme === 'dark'}
       onToggleTheme={toggleTheme}
       onOpenProfile={() => setActivePage('Settings')}
-      onAddNewUser={() => setIsSigningUp(true)}
       onLogout={handleLogout}
     >
       {/* Dynamic Tab Views */}

@@ -63,6 +63,7 @@ export interface UserProfile {
   bio?: string;
   lastActiveDate?: string;
   avatar?: string;
+  phone?: string;
 }
 
 export interface BetGroup {
