@@ -521,6 +521,15 @@ export function App() {
         existingUsers={users}
         onSelectUser={(id) => setCurrentUserId(id)}
         onStartSignup={() => setIsSigningUp(true)}
+        onOtpLoginSuccess={(profile, token) => {
+          setUsers((prev) => {
+            const existing = prev.find((u) => u.id === profile.id || u.name === profile.name);
+            if (existing) return prev;
+            return [...prev, profile];
+          });
+          setCurrentUserId(profile.id);
+          setToast(`Verified & logged in as ${profile.name}`);
+        }}
         isDarkMode={theme === 'dark'}
         onToggleTheme={toggleTheme}
         betGroup={betGroup}

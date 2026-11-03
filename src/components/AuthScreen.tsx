@@ -1,13 +1,15 @@
-import React from 'react';
-import { ArrowRight, UserPlus, LogIn, Trophy, Flame, Shield, Sun, Moon } from 'lucide-react';
+import React, { useState } from 'react';
+import { ArrowRight, UserPlus, LogIn, Trophy, Flame, Shield, Sun, Moon, Phone } from 'lucide-react';
 import { UserProfile, BetGroup } from '../types';
 import { Avatar } from './Avatar';
 import { LineDiagramBackground } from './LineDiagramBackground';
+import { PhoneOtpModal } from './PhoneOtpModal';
 
 interface AuthScreenProps {
   existingUsers: UserProfile[];
   onSelectUser: (userId: string) => void;
   onStartSignup: () => void;
+  onOtpLoginSuccess?: (profile: UserProfile, token: string) => void;
   isDarkMode: boolean;
   onToggleTheme: () => void;
   betGroup?: BetGroup;
@@ -17,10 +19,13 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
   existingUsers,
   onSelectUser,
   onStartSignup,
+  onOtpLoginSuccess,
   isDarkMode,
   onToggleTheme,
   betGroup
 }) => {
+  const [isOtpOpen, setIsOtpOpen] = useState(false);
+
   return (
     <div className="min-h-screen bg-[var(--bg)] flex flex-col relative overflow-hidden">
       <LineDiagramBackground variant="topographic" />
@@ -97,7 +102,7 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
           )}
 
           {/* Primary Action: Sign Up / Create New Profile */}
-          <div className="space-y-3 text-center">
+          <div className="space-y-2.5 text-center">
             <button
               onClick={onStartSignup}
               className="btn-primary w-full h-12 text-xs font-semibold rounded-xl shadow-xs flex items-center justify-center gap-2"
@@ -107,7 +112,16 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
               <ArrowRight size={16} />
             </button>
 
-            <p className="text-xs text-[var(--muted)]">
+            <button
+              type="button"
+              onClick={() => setIsOtpOpen(true)}
+              className="btn-secondary w-full h-11 text-xs font-semibold rounded-xl flex items-center justify-center gap-2 border-[var(--line)]"
+            >
+              <Phone size={15} className="text-[var(--green)]" />
+              <span>Sign in with Phone OTP (SMS / WhatsApp)</span>
+            </button>
+
+            <p className="text-xs text-[var(--muted)] pt-1">
               Takes 60 seconds to configure your starting weight, target goal, and habits.
             </p>
           </div>
@@ -128,12 +142,25 @@ export const AuthScreen: React.FC<AuthScreenProps> = ({
 
             <div className="p-2 space-y-1">
               <Shield size={16} className="mx-auto text-[var(--green)]" />
-              <b className="text-xs text-[var(--text)] block font-semibold">Private & Local</b>
-              <span className="text-xs text-[var(--muted)] block">No cloud server</span>
+              <b className="text-xs text-[var(--text)] block font-semibold">Verified Cloud</b>
+              <span className="text-xs text-[var(--muted)] block">Real-time sync</span>
             </div>
           </div>
         </div>
       </div>
+
+      <PhoneOtpModal
+        isOpen={isOtpOpen}
+        onClose={() => setIsOtpOpen(false)}
+        onLoginSuccess={(profile, token) => {
+          if (onOtpLoginSuccess) {
+            onOtpLoginSuccess(profile, token);
+          } else {
+            onSelectUser(profile.id);
+          }
+        }}
+      />
     </div>
+
   );
 };
